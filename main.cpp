@@ -1,5 +1,6 @@
 #include "httplib.h"
-#include "sqlite3.h"
+#include "Model.h"
+#include "View.h"
 #include <iostream>
 
 int main(void)
@@ -7,40 +8,30 @@ int main(void)
 	using namespace httplib;
 
 	Server server;
+	Model model("Configurations.sqlite");
+	View view;
 
-	server.Get("/", [](const Request& req, Response& res)
+	server.Get("/", [&view, &model](const Request& req, Response& res)
 	{
-		std::ifstream index("../html/index.html");
-		std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
-		std::cout << req.path << std::endl;
+		// std::ifstream index("../html/index.html");
+		// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
+		// std::cout << req.path << " Ans len:" << body.length() << std::endl;
 
-		res.set_content(body, "text/html");
+		res.set_content(view.GetIndex(model.GetConfigurations()), "text/html");
 	});
 
-	server.Get("/html/bootstrap-5.3.0-dist/css/bootstrap.min.css", [](const Request& req, Response& res)
+	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request& req, Response& res)
 	{
-		std::ifstream index("../html/bootstrap-5.3.0-dist/css/bootstrap.min.css");
+		std::string static_path = "../" + req.matches[1].str();
+		std::ifstream index(static_path.c_str());
 		std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
-		std::cout << req.path << std::endl;
-
-		res.set_content(body, "text/css");
+		std::cout << "Static path: " << static_path << ", Ext: " << req.matches[2].str() << std::endl;
+		std::string content_type = req.matches[2].str() == ".css" ? "text/css" : "text/javascript";
+		res.set_content(body, content_type);
 	});
 
-	server.Get("/html/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js", [](const Request& req, Response& res)
+	server.Get("/body-header-param", [](const Request& req, Response& res)
 	{
-		std::ifstream index("../html/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js");
-		std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
-		std::cout << req.path << std::endl;
-
-		res.set_content(body, "text/plain");
-	});
-
-	server.Get(R"(/numbers/(\d+))", [&](const Request& req, Response& res) {
-		auto numbers = req.matches[1];
-		res.set_content(numbers, "text/plain");
-	});
-
-	server.Get("/body-header-param", [](const Request& req, Response& res) {
 		if (req.has_header("Content-Length")) {
 			auto val = req.get_header_value("Content-Length");
 		}
@@ -50,25 +41,18 @@ int main(void)
 		res.set_content(req.body, "text/plain");
 	});
 
-	server.Get("/stop", [&](const Request& req, Response& res) {
+	server.Get("/stop", [&](const Request& req, Response& res)
+	{
 		server.stop();
 	});
 
-
-   sqlite3 *db;
-   char *zErrMsg = 0;
-   int rc;
-
-   rc = sqlite3_open("test.db", &db);
-
-   if( rc ) {
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      return(0);
-   } else {
-      fprintf(stderr, "Opened database successfully\n");
-   }
-   sqlite3_close(db);
-
+	// model.AddConfiguration("config");
+	// model.AddConfiguration("test");
+	// auto result = model.GetConfigurations();
+	// for(auto& el : result)
+	// {
+	// 	std::cout << el.c_str() << std::endl;
+	// }
 
 	server.listen("localhost", 80);
 }

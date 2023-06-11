@@ -1,9 +1,24 @@
 cmake_minimum_required(VERSION 3.16.3)
 
 project(CppServer)
+set(PROJECT_BINARY_DIR build)
 
-include_directories(
-	${CMAKE_SOURCE_DIR}/
+set(CMAKE_BUILD_TYPE DEBUG)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
+
+# add_compile_options(-O0)
+# add_link_options(-O0 -MD -D_DLL)
+# add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++2a)
+
+file(GLOB SOURCES
+	"${PROJECT_SOURCE_DIR}/*.cpp",
+	"${PROJECT_SOURCE_DIR}/*.c"
 )
 
-add_executable(CppServer main.cpp sqlite3.c)
+include_directories(
+	${CMAKE_SOURCE_DIR}
+)
+
+add_executable(CppServer ${SOURCES})
