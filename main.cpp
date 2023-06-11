@@ -46,8 +46,11 @@ int main(void)
 		server.stop();
 	});
 
-	// model.AddConfiguration("config");
-	// model.AddConfiguration("test");
+	model.AddConfiguration("config");
+	model.AddConfiguration("test");
+	model.DeleteConfiguration("config");
+	model.AddCommand("test", "cmd2test", "0xffff");
+	model.DeleteCommand("test", "cmd2test");
 	// auto result = model.GetConfigurations();
 	// for(auto& el : result)
 	// {
