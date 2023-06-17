@@ -9,27 +9,120 @@
   </head>
   <body>
     <div class="container py-5">
-      <h1 class="h2">Bootstrap v5 Bug Report</h1>
+      <h3 class="h3">Bootstrap v5 Bug Report</h3>
+      <div class="row">
+        <div class="col-sm-2">
+          <p>Available Ports:</p>
+        </div>
+        <div class="col-sm-3">
+          <select class="form-select" id="select_ports" aria-label="Default select example">
+            {{for:ports}}<option value="{{index}}" {{selected}}>{{name}}</option>{{ports:for}}
+          </select>
+        </div>
+        <div class="col-sm-4">
+          <a class="btn btn-primary" id="port_scan" href="#" rel="noopener noreferrer" target="_blank">Rescan Ports</a>
+        </div>
+      </div>
       <div class="row">
         <p>
           <div class="col-sm-2">
             <p>{{header}}</p>
           </div>
           <div class="col-sm-3">
-            <select class="form-select" aria-label="Default select example">
-              {{for:}}<option value="{{index}}" {{selected}}>{{name}}</option>{{:for}}
+            <select class="form-select" id="select_config" aria-label="Default select example">
+              {{for:config}}<option value="{{index}}" {{selected}}>{{name}}</option>{{config:for}}
             </select>
           </div>
-          <div class="col-sm-4"></div>
           <div class="col-sm-3">
-          <a class="btn btn-primary" href="/configurations" rel="noopener noreferrer" target="_blank">Edit configurations</a>
+            <a class="btn btn-primary" id="edit_config" href="#" rel="noopener noreferrer" target="_blank">Edit configurations</a>
           </div>
         </p>
       </div>
+      <div class="row">
+        <div class="col-sm-2">
+          <label for="config_speed">Speed</label>
+          <select class="form-select" id="config_speed">
+            <option value="9600">9600</option>
+            <option value="115200" selected>115200</option>
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <label for="config_databits">Data Bits</label>
+          <select class="form-select" id="config_databits">
+            <option value="7">7</option>
+            <option value="8" selected>8</option>
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <label for="config_parity">Parity</label>
+          <select class="form-select" id="config_parity">
+            <option value="None" selected>None</option>
+            <option value="Odd">Odd</option>
+            <option value="Even">Even</option>
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <label for="config_stopbits">Stop Bits</label>
+          <select class="form-select" id="config_stopbits">
+            <option value="1" selected>1</option>
+            <option value="2" selected>2</option>
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <label for="config_flowcontrol">Flow Ctrl</label>
+          <select class="form-select" id="config_flowcontrol">
+            <option value="0" selected>0</option>
+          </select>
+        </div>
+      </div>
       <p>Once you're set, replace the contents of this page and share the link with us in a <a href="#" rel="noopener noreferrer" target="_blank">new issue</a>.</p>
     </div>
-  
+
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script> -->
     <script src="html/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+
+        document.getElementById('select_config').addEventListener('change', () => {
+          console.log(document.getElementById('select_config').value);
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', '/getconfiguration?config=' + document.getElementById('select_config').value);
+          xhr.responseType = 'json';
+          xhr.onload = () => {
+            if (xhr.status !== 200) {
+              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+              return;
+            }
+            const response = xhr.response;
+            console.log(response.Speed);
+          };
+          xhr.onerror = () => {
+            console.log(`Ошибка при выполнении запроса`);
+          };
+          xhr.send();
+        });
+
+			  document.getElementById('edit_config').addEventListener('click', (event) => {
+          event.preventDefault();
+
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', '/editconfig');
+          xhr.onload = () => {
+            if (xhr.status !== 200) {
+              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+              return;
+            }
+            const response = xhr.response;
+            console.log(response);
+          };
+          xhr.onerror = () => {
+            console.log(`Ошибка при выполнении запроса`);
+          };
+          xhr.send();
+
+        }, false);
+
+      });
+    </script>
   </body>
 </html>

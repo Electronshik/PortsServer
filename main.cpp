@@ -2,6 +2,7 @@
 #include "Model.h"
 #include "View.h"
 #include <iostream>
+#include <format>
 
 int main(void)
 {
@@ -30,6 +31,35 @@ int main(void)
 		res.set_content(body, content_type);
 	});
 
+	server.Get("/editconfig", [&model](const Request& req, Response& res)
+	{
+		res.set_content("editconfig requested!", "text/plain");
+	});
+
+	server.Get("/getconfiguration", [&model](const Request& req, Response& res)
+	{
+		std::cout << req.get_param_value("config") << std::endl;
+		auto config = model.GetConfiguration(req.get_param_value("config").c_str());
+		std::cout << config.Speed << std::endl;
+		std::string response = std::format("{{	\
+			\"Speed\":\"{}\",	\
+			\"Databits\":\"{}\",	\
+			\"Parity\":\"{}\",	\
+			\"Stopbits\":\"{}\",	\
+			\"Flowcontrol\":\"{}\"	\
+			}}", config.Speed, config.Databits, config.Parity, config.Stopbits, config.Flowcontrol);
+		std::cout << response << std::endl;
+		res.set_content(response.c_str(), "text/javascript");
+	});
+
+	server.Get("/getcommands", [&model](const Request& req, Response& res)
+	{
+		auto result = model.GetCommands("config");
+		for (auto &el : result)
+        	std::cout << '[' << el.Name << "] = " << el.Cmd << "; ";
+		res.set_content("getcommands requested!", "text/plain");
+	});
+
 	server.Get("/body-header-param", [](const Request& req, Response& res)
 	{
 		if (req.has_header("Content-Length")) {
@@ -46,16 +76,22 @@ int main(void)
 		server.stop();
 	});
 
-	model.AddConfiguration("config");
-	model.AddConfiguration("test");
-	model.DeleteConfiguration("config");
+	SerialPortConfig PortConfig;
+	model.AddConfiguration("config", PortConfig);
+	PortConfig.Speed = 9600;
+	PortConfig.Stopbits = 2;
+	model.AddConfiguration("test", PortConfig);
+	// model.DeleteConfiguration("config");
+	model.AddCommand("test", "cmdtest", "0xffff");
 	model.AddCommand("test", "cmd2test", "0xffff");
-	model.DeleteCommand("test", "cmd2test");
-	// auto result = model.GetConfigurations();
-	// for(auto& el : result)
-	// {
-	// 	std::cout << el.c_str() << std::endl;
-	// }
+	model.AddCommand("config", "config cmd", "0x11ff");
+	model.AddCommand("config", "config new cmd", "0x22ff");
+	// model.DeleteCommand("test", "cmd2test");
+	auto result = model.GetConfigurations();
+	for(auto& el : result)
+	{
+		std::cout << el.c_str() << std::endl;
+	}
 
 	server.listen("localhost", 80);
 }
