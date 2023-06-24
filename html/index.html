@@ -10,19 +10,7 @@
   <body>
     <div class="container py-5">
       <h3 class="h3">Bootstrap v5 Bug Report</h3>
-      <div class="row">
-        <div class="col-sm-2">
-          <p>Available Ports:</p>
-        </div>
-        <div class="col-sm-3">
-          <select class="form-select" id="select_ports" aria-label="Default select example">
-            {{for:ports}}<option value="{{index}}" {{selected}}>{{name}}</option>{{ports:for}}
-          </select>
-        </div>
-        <div class="col-sm-4">
-          <a class="btn btn-primary" id="port_scan" href="#" rel="noopener noreferrer" target="_blank">Rescan Ports</a>
-        </div>
-      </div>
+
       <div class="row">
         <p>
           <div class="col-sm-2">
@@ -30,83 +18,137 @@
           </div>
           <div class="col-sm-3">
             <select class="form-select" id="select_config" aria-label="Default select example">
-              {{for:config}}<option value="{{index}}" {{selected}}>{{name}}</option>{{config:for}}
+              {% for config in configs %}<option value="{{ config }}" {% if config == config_selected %} selected {% endif %} >{{ config }}</option>{% endfor %}
             </select>
           </div>
-          <div class="col-sm-3">
-            <a class="btn btn-primary" id="edit_config" href="#" rel="noopener noreferrer" target="_blank">Edit configurations</a>
+          <div class="col-sm-4">
+            <button type="button" class="btn btn-success" id="add_config">Add configuration</button>
+            <button type="button" class="btn btn-success" id="delete_config">Delete configuration</button>
           </div>
         </p>
       </div>
-      <div class="row">
+
+      <div class="row py-2">
+        <div class="col-sm-2">
+          <label for="config_new_name">Configuration Name: </label>
+        </div>
+        <div class="col-sm-3">
+          <input type="text" class="form-control" id="config_new_name" value="{{ config_selected }}" disabled />
+        </div>
+      </div>
+
+      <div class="row py-2">
         <div class="col-sm-2">
           <label for="config_speed">Speed</label>
-          <select class="form-select" id="config_speed">
-            <option value="9600">9600</option>
-            <option value="115200" selected>115200</option>
-          </select>
         </div>
         <div class="col-sm-1">
           <label for="config_databits">Data Bits</label>
-          <select class="form-select" id="config_databits">
-            <option value="7">7</option>
-            <option value="8" selected>8</option>
-          </select>
         </div>
         <div class="col-sm-1">
           <label for="config_parity">Parity</label>
-          <select class="form-select" id="config_parity">
-            <option value="None" selected>None</option>
-            <option value="Odd">Odd</option>
-            <option value="Even">Even</option>
-          </select>
         </div>
         <div class="col-sm-1">
           <label for="config_stopbits">Stop Bits</label>
-          <select class="form-select" id="config_stopbits">
-            <option value="1" selected>1</option>
-            <option value="2" selected>2</option>
-          </select>
         </div>
         <div class="col-sm-1">
           <label for="config_flowcontrol">Flow Ctrl</label>
-          <select class="form-select" id="config_flowcontrol">
-            <option value="0" selected>0</option>
-          </select>
         </div>
       </div>
+
+      <div class="row">
+        <div class="col-sm-2">
+          <select class="form-select" id="config_speed" disabled>
+            {% for speed in all_port_speed %}<option value="{{ speed }}" {% if speed == port_speed %} selected {% endif %} >{{ speed }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <select class="form-select" id="config_databits" disabled>
+            {% for databits in all_port_databits %}<option value="{{ databits }}" {% if databits == port_databits %} selected {% endif %} >{{ databits }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <select class="form-select" id="config_parity" disabled>
+            {% for parity in all_port_parity %}<option value="{{ parity }}" {% if parity == port_parity %} selected {% endif %} >{{ parity }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <select class="form-select" id="config_stopbits" disabled>
+            {% for stopbits in all_port_stopbits %}<option value="{{ stopbits }}" {% if stopbits == port_stopbits %} selected {% endif %} >{{ stopbits }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <select class="form-select" id="config_flowcontrol" disabled>
+            {% for flowcontrol in all_port_flowcontrol %}<option value="{{ flowcontrol }}" {% if flowcontrol == port_flowcontrol %} selected {% endif %} >{{ flowcontrol }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-4">
+          <button type="button" class="btn btn-success" id="edit_config_params">Edit Params</button>
+          <button type="button" class="btn btn-success" id="save_config_params" disabled>Save Params</button>
+          <button type="button" class="btn btn-success" id="cancel_config_params" disabled>Cancel</button>
+         </div>
+      </div>
+
+      <div class="row py-5">
+        <div class="col-sm-2">
+          <p>Available Ports:</p>
+        </div>
+        <div class="col-sm-3">
+          <select class="form-select" id="select_ports" aria-label="Default select example">
+            {% for port in ports %}<option value="{{ port }}">{{ port }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-5">
+          <button type="button" class="btn btn-success" id="port_scan">Rescan Ports</button>
+          <button type="button" class="btn btn-primary" id="port_open">Port Open</button>
+          <button type="button" class="btn btn-primary" id="port_close" disabled>Port Close</button>
+        </div>
+      </div>
+
       <p>Once you're set, replace the contents of this page and share the link with us in a <a href="#" rel="noopener noreferrer" target="_blank">new issue</a>.</p>
     </div>
 
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script> -->
     <script src="html/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js"></script>
     <script>
+
+      function setCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+      }
+
+      let params_array = ['config_new_name', 'config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
+
+      function setParamsActive(active) {
+        for(param_id of params_array)
+          document.getElementById(param_id).disabled = !active;
+
+        document.getElementById('select_config').disabled = active;
+        document.getElementById('save_config_params').disabled = !active;
+        document.getElementById('cancel_config_params').disabled = !active;
+      };
+
+
       document.addEventListener('DOMContentLoaded', function() {
 
-        document.getElementById('select_config').addEventListener('change', () => {
-          console.log(document.getElementById('select_config').value);
-          const xhr = new XMLHttpRequest();
-          xhr.open('GET', '/getconfiguration?config=' + document.getElementById('select_config').value);
-          xhr.responseType = 'json';
-          xhr.onload = () => {
-            if (xhr.status !== 200) {
-              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-              return;
-            }
-            const response = xhr.response;
-            console.log(response.Speed);
-          };
-          xhr.onerror = () => {
-            console.log(`Ошибка при выполнении запроса`);
-          };
-          xhr.send();
+        document.getElementById('edit_config_params').addEventListener('click', () => {
+          setParamsActive(true);
         });
 
-			  document.getElementById('edit_config').addEventListener('click', (event) => {
-          event.preventDefault();
-
+        document.getElementById('save_config_params').addEventListener('click', () => {
           const xhr = new XMLHttpRequest();
-          xhr.open('GET', '/editconfig');
+          var body = 'active_config=' + document.getElementById('select_config').value + '&';
+          for(param_id of params_array)
+          {
+            body += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
+            if(param_id != params_array.slice(-1))
+              body += '&';
+          }
+          xhr.open('POST', '/saveconfigparams');
           xhr.onload = () => {
             if (xhr.status !== 200) {
               console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
@@ -118,7 +160,36 @@
           xhr.onerror = () => {
             console.log(`Ошибка при выполнении запроса`);
           };
-          xhr.send();
+          xhr.send(body);
+
+          setParamsActive(false);
+        });
+
+        document.getElementById('cancel_config_params').addEventListener('click', () => {
+          setParamsActive(false);
+        });
+
+			  document.getElementById('delete_config').addEventListener('click', (event) => {
+          event.preventDefault();
+
+          if (confirm('Are you sure you want to remove this configuration?')) {
+            console.log('Thing was saved to the database.');
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/deleteconfig?config=' + document.getElementById('select_config').value);
+            xhr.onload = () => {
+              if (xhr.status !== 200) {
+                console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+                return;
+              }
+              const response = xhr.response;
+              console.log(response);
+              location.reload();
+            };
+            xhr.onerror = () => {
+              console.log(`Ошибка при выполнении запроса`);
+            };
+            xhr.send();
+          }
 
         }, false);
 

@@ -75,7 +75,16 @@
 		"xtr1common": "cpp",
 		"xtree": "cpp",
 		"xutility": "cpp",
-		"*.rh": "cpp"
+		"*.rh": "cpp",
+		"ranges": "cpp",
+		"span": "cpp",
+		"any": "cpp",
+		"codecvt": "cpp",
+		"deque": "cpp",
+		"filesystem": "cpp",
+		"numeric": "cpp",
+		"stack": "cpp",
+		"valarray": "cpp"
 	},
 	"cmake.configureOnOpen": true
 }

@@ -13,7 +13,7 @@ Model::Model(const char *filename)
 	{
 		printf("Opened database successfully\n");
 		std::string create_configurations_query = "CREATE TABLE configurations (id INTEGER PRIMARY KEY AUTOINCREMENT,	\
-			name TEXT NOT NULL UNIQUE, speed INTEGER, databits INTEGER, parity INTEGER, stopbits INTEGER, flowcontrol INTEGER, format TEXT, active INTEGER)";
+			name TEXT NOT NULL UNIQUE, speed TEXT, databits TEXT, parity TEXT, stopbits TEXT, flowcontrol TEXT, format TEXT)";
 
 		sqlite3_exec(this->db, create_configurations_query.c_str(), NULL, 0, NULL);
 	}
@@ -66,23 +66,23 @@ SerialPortConfig Model::GetConfiguration(const char *name)
 			// printf("Col: %s : %s\n", azColName[i], argv[i]);
 			if (strcmp(azColName[i], "speed") == 0)
 			{
-				result->Speed = std::atoi(argv[i]);
+				result->Speed.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "databits") == 0)
 			{
-				result->Databits = std::atoi(argv[i]);
+				result->Databits.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "parity") == 0)
 			{
-				result->Parity = std::atoi(argv[i]);
+				result->Parity.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "stopbits") == 0)
 			{
-				result->Stopbits = std::atoi(argv[i]);
+				result->Stopbits.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "flowcontrol") == 0)
 			{
-				result->Flowcontrol = std::atoi(argv[i]);
+				result->Flowcontrol.assign(argv[i]);
 			}
 		}
 	};
@@ -92,12 +92,12 @@ SerialPortConfig Model::GetConfiguration(const char *name)
 	return port_config;
 }
 
-void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig, const bool active)
+void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig)
 {
-	std::string query = std::format("INSERT INTO configurations (name, speed, databits, parity, stopbits, flowcontrol, format, active)	\
-		VALUES('{0}','{1}','{2}','{3:d}','{4}','{5:d}','{6}','{7:d}')",
+	std::string query = std::format("INSERT INTO configurations (name, speed, databits, parity, stopbits, flowcontrol, format)	\
+		VALUES('{0}','{1}','{2}','{3}','{4}','{5}','{6}')",
 		name, PortConfig.Speed, PortConfig.Databits, PortConfig.Parity,
-		PortConfig.Stopbits, PortConfig.Flowcontrol, PortConfig.Format.c_str(), active);
+		PortConfig.Stopbits, PortConfig.Flowcontrol, PortConfig.Format);
 	std::cout << query << std::endl;
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 
@@ -107,12 +107,13 @@ void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig, con
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
-void Model::UpdateConfiguration(const char *name, SerialPortConfig &PortConfig, const bool active)
+void Model::UpdateConfiguration(const char *name, SerialPortConfig &PortConfig)
 {
-	std::string query = std::format("UPDATE configurations SET speed='{0}', databits={1}, parity={2:d},	\
-		stopbits={3}, flowcontrol={4:d}, format='{5}', active={6:d} WHERE name='{7}'",
+	std::string query = std::format("UPDATE configurations SET speed='{0}', databits='{1}', parity='{2}',	\
+		stopbits='{3}', flowcontrol='{4}', format='{5}' WHERE name='{6}'",
 		PortConfig.Speed, PortConfig.Databits, PortConfig.Parity,
-		PortConfig.Stopbits, PortConfig.Flowcontrol, PortConfig.Format.c_str(), active, name);
+		PortConfig.Stopbits, PortConfig.Flowcontrol, PortConfig.Format, name);
+	std::cout << query << std::endl;
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 

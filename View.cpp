@@ -1,46 +1,14 @@
 #include "View.h"
 
+#include <json.hpp>
+#include <inja.hpp>
+
 #include <fstream>
 #include <iostream>
 
-bool replace(std::string& str, const std::string& from, const std::string& to) {
-	size_t start_pos = str.find(from);
-	if(start_pos == std::string::npos)
-		return false;
+using namespace inja;
 
-	str.replace(start_pos, from.length(), to);
-	return true;
-}
-
-bool for_replace(std::string& str, const std::string& for_name, std::vector<std::string> loop_elements)
-{
-	std::string for_begin_str = std::string("{{for:") + for_name + "}}";
-	std::string for_end_str = std::string("{{") + for_name + ":for}}";
-	size_t for_begin_pos = str.find(for_begin_str);
-	if (for_begin_pos == std::string::npos)
-		return false;
-
-	size_t for_inner_begin_pos = for_begin_pos + for_begin_str.length();
-	size_t for_end_pos = str.find(for_end_str);
-	if (for_end_pos == std::string::npos)
-		return false;
-
-	std::string inner_substr = str.substr(for_inner_begin_pos, for_end_pos - for_inner_begin_pos);
-
-	std::string replace_to;
-	unsigned int index = 1;
-	for (auto& el : loop_elements)
-	{
-		replace_to.append(inner_substr);
-		replace(replace_to, "{{index}}", el);
-		replace(replace_to, "{{selected}}", index == 1 ? "selected" : "");
-		replace(replace_to, "{{name}}", el);
-		index++;
-	}
-
-	str.replace(for_begin_pos, for_end_pos + for_end_str.length() - for_begin_pos, replace_to);
-	return true;
-}
+static Environment InjaEnv {"../html/"};
 
 View::View()
 {
@@ -50,13 +18,30 @@ View::~View()
 {
 }
 
-std::string View::GetIndex(std::vector<std::string> configurations)
+std::string View::GetIndex(std::vector<std::string> &configurations, std::string &active_config, SerialPortConfig &port_config)
 {
-	std::ifstream index("../html/index.html");
-	std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
-	replace(body, "{{header}}", "Active configuration:");
-	for_replace(body, "ports", {"COM1", "COM2"});
-	for_replace(body, "config", configurations);
+	// std::ifstream index("../html/index.html");
+	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 
-	return body;
+	json data;
+	data["header"] = "Active configuration:";
+	data["ports"] = {"COM1", "COM2"};
+	data["configs"] = configurations;
+	data["config_selected"] = active_config;
+
+	data["all_port_speed"] = PortSpeed;
+	data["all_port_databits"] = PortDatabits;
+	data["all_port_parity"] = PortParity;
+	data["all_port_stopbits"] = PortStopbits;
+	data["all_port_flowcontrol"] = PortFlowcontrol;
+
+	data["port_speed"] = port_config.Speed;
+	data["port_databits"] = port_config.Databits;
+	data["port_parity"] = port_config.Parity;
+	data["port_stopbits"] = port_config.Stopbits;
+	data["port_flowcontrol"] = port_config.Flowcontrol;
+
+	// Environment env;
+
+	return InjaEnv.render_file("index.html", data);
 }
