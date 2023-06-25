@@ -21,3 +21,9 @@ struct SerialPortConfig
 	std::string Flowcontrol = "None";
 	std::string Format = "ASCII";
 };
+
+struct Command
+{
+	std::string Name = "NULL";
+	std::string Cmd = "NULL";
+};

@@ -18,7 +18,8 @@ View::~View()
 {
 }
 
-std::string View::GetIndex(std::vector<std::string> &configurations, std::string &active_config, SerialPortConfig &port_config)
+std::string View::GetIndex(std::vector<std::string> &configurations, std::string &active_config,
+	SerialPortConfig &port_config, std::vector<Command> &commands)
 {
 	// std::ifstream index("../html/index.html");
 	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
@@ -41,7 +42,20 @@ std::string View::GetIndex(std::vector<std::string> &configurations, std::string
 	data["port_stopbits"] = port_config.Stopbits;
 	data["port_flowcontrol"] = port_config.Flowcontrol;
 
-	// Environment env;
+	std::string rendered_commands;
+	json cmds;
+	for (Command &cmd : commands)
+	{
+		cmds["name"] = cmd.Name;
+		cmds["cmd"] = cmd.Cmd;
+		// std::string cmd_template = "<p>{{ name }} : {{ cmd }}</p>";
+		std::string cmd_template = "<div class=\"row\"><div class=\"col-sm-2\"><button type=\"button\" class=\"btn btn-success\">{{ name }}</button></div>	\
+			<div class=\"col-sm-2\"><p>{{ cmd }}</p></div></div>";
+		rendered_commands.append(InjaEnv.render(cmd_template, cmds));
+	}
+
+	// data["commands"] = {{ {"name", "name1"}, {"cmd", "cmd1"} }, { {"name", "name2"}, {"cmd", "cmd2"} }};
+	data["commands"] = rendered_commands;
 
 	return InjaEnv.render_file("index.html", data);
 }

@@ -28,31 +28,14 @@
         </p>
       </div>
 
-      <div class="row py-2">
-        <div class="col-sm-2">
-          <label for="config_new_name">Configuration Name: </label>
-        </div>
-        <div class="col-sm-3">
-          <input type="text" class="form-control" id="config_new_name" value="{{ config_selected }}" disabled />
-        </div>
-      </div>
+      <div class="row py-2" id="config_new_name_wrapper"></div>
 
       <div class="row py-2">
-        <div class="col-sm-2">
-          <label for="config_speed">Speed</label>
-        </div>
-        <div class="col-sm-1">
-          <label for="config_databits">Data Bits</label>
-        </div>
-        <div class="col-sm-1">
-          <label for="config_parity">Parity</label>
-        </div>
-        <div class="col-sm-1">
-          <label for="config_stopbits">Stop Bits</label>
-        </div>
-        <div class="col-sm-1">
-          <label for="config_flowcontrol">Flow Ctrl</label>
-        </div>
+        <div class="col-sm-2"><label for="config_speed">Speed</label></div>
+        <div class="col-sm-1"><label for="config_databits">Data Bits</label></div>
+        <div class="col-sm-1"><label for="config_parity">Parity</label></div>
+        <div class="col-sm-1"><label for="config_stopbits">Stop Bits</label></div>
+        <div class="col-sm-1"><label for="config_flowcontrol">Flow Ctrl</label></div>
       </div>
 
       <div class="row">
@@ -81,9 +64,9 @@
             {% for flowcontrol in all_port_flowcontrol %}<option value="{{ flowcontrol }}" {% if flowcontrol == port_flowcontrol %} selected {% endif %} >{{ flowcontrol }}</option>{% endfor %}
           </select>
         </div>
-        <div class="col-sm-4">
-          <button type="button" class="btn btn-success" id="edit_config_params">Edit Params</button>
-          <button type="button" class="btn btn-success" id="save_config_params" disabled>Save Params</button>
+        <div class="col-sm-3">
+          <button type="button" class="btn btn-success" id="edit_config_params">Edit Config</button>
+          <button type="button" class="btn btn-success" id="save_config_params" disabled>Save</button>
           <button type="button" class="btn btn-success" id="cancel_config_params" disabled>Cancel</button>
          </div>
       </div>
@@ -102,7 +85,12 @@
           <button type="button" class="btn btn-primary" id="port_open">Port Open</button>
           <button type="button" class="btn btn-primary" id="port_close" disabled>Port Close</button>
         </div>
-      </div>
+
+        <div class="row py-5">
+            {{ commands }}
+        </div>
+
+      </div><!-- container -->
 
       <p>Once you're set, replace the contents of this page and share the link with us in a <a href="#" rel="noopener noreferrer" target="_blank">new issue</a>.</p>
     </div>
@@ -112,66 +100,58 @@
     <script>
 
       function setCookie(name, value, days) {
-        var expires = "";
+        let expires = "";
         if (days) {
-            var date = new Date();
-            date.setTime(date.getTime() + (days*24*60*60*1000));
-            expires = "; expires=" + date.toUTCString();
+          let date = new Date();
+          date.setTime(date.getTime() + (days*24*60*60*1000));
+          expires = "; expires=" + date.toUTCString();
         }
         document.cookie = name + "=" + (value || "")  + expires + "; path=/";
       }
 
-      let params_array = ['config_new_name', 'config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
+      var params_array = ['config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
+      var new_config_process = false;
 
-      function setParamsActive(active) {
+      function setParamsActive(active, config_name = 'NewName') {
         for(param_id of params_array)
           document.getElementById(param_id).disabled = !active;
 
         document.getElementById('select_config').disabled = active;
         document.getElementById('save_config_params').disabled = !active;
         document.getElementById('cancel_config_params').disabled = !active;
+
+        let config_new_name_wrapper = document.getElementById('config_new_name_wrapper');
+        if(active)
+        {
+          config_new_name_wrapper.innerHTML = '<div class="col-sm-2"><label for="config_new_name">Configuration Name: </label></div>' + 
+              '<div class="col-sm-3"><input type="text" class="form-control" id="config_new_name" value="' +
+              config_name + '" /></div>';
+        }
+        else
+        {
+          config_new_name_wrapper.innerHTML = '';
+          if(new_config_process == true)
+            new_config_process = false;
+        }
       };
 
 
       document.addEventListener('DOMContentLoaded', function() {
 
-        document.getElementById('edit_config_params').addEventListener('click', () => {
+//~ CONFIGURATION
+
+        document.getElementById('select_config').addEventListener('change', (event) => {
+          setCookie('active', document.getElementById('select_config').value, 1);
+          location.reload();
+        });
+
+        document.getElementById('add_config').addEventListener('click', () => {
+          new_config_process = true;
           setParamsActive(true);
-        });
-
-        document.getElementById('save_config_params').addEventListener('click', () => {
-          const xhr = new XMLHttpRequest();
-          var body = 'active_config=' + document.getElementById('select_config').value + '&';
-          for(param_id of params_array)
-          {
-            body += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
-            if(param_id != params_array.slice(-1))
-              body += '&';
-          }
-          xhr.open('POST', '/saveconfigparams');
-          xhr.onload = () => {
-            if (xhr.status !== 200) {
-              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-              return;
-            }
-            const response = xhr.response;
-            console.log(response);
-          };
-          xhr.onerror = () => {
-            console.log(`Ошибка при выполнении запроса`);
-          };
-          xhr.send(body);
-
-          setParamsActive(false);
-        });
-
-        document.getElementById('cancel_config_params').addEventListener('click', () => {
-          setParamsActive(false);
         });
 
 			  document.getElementById('delete_config').addEventListener('click', (event) => {
           event.preventDefault();
-
           if (confirm('Are you sure you want to remove this configuration?')) {
             console.log('Thing was saved to the database.');
             const xhr = new XMLHttpRequest();
@@ -190,8 +170,62 @@
             };
             xhr.send();
           }
-
         }, false);
+
+        document.getElementById('edit_config_params').addEventListener('click', () => {
+          setParamsActive(true, document.getElementById('select_config').value);
+        });
+
+        document.getElementById('save_config_params').addEventListener('click', () => {
+          const xhr = new XMLHttpRequest();
+          let active_config_name = document.getElementById('select_config').value;
+          let body = 'active_config=' + active_config_name + '&';
+          let new_name = document.getElementById('config_new_name').value;
+          if(active_config_name != new_name)
+          {
+            body += 'config_new_name=' + document.getElementById('config_new_name').value + '&';
+          }
+          if(new_config_process == true)
+          {
+            body += 'new_config_process=true&';
+          }
+          console.log(body);
+          for(param_id of params_array)
+          {
+            body += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
+            if(param_id != params_array.slice(-1))
+              body += '&';
+          }
+          xhr.open('POST', '/saveconfigparams');
+          xhr.onload = () => {
+            if (xhr.status !== 200) {
+              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+              return;
+            }
+            const response = xhr.response;
+            console.log(response);
+            if(active_config_name != new_name)
+            {
+              setCookie('active', new_name, 1);
+              location.reload();
+            }
+          };
+          xhr.onerror = () => {
+            console.log(`Ошибка при выполнении запроса`);
+          };
+          xhr.send(body);
+          setParamsActive(false);
+        });
+
+        document.getElementById('cancel_config_params').addEventListener('click', () => {
+          setParamsActive(false);
+        });
+
+//~ CONFIGURATION
+
+//~ COMMANDS
+
+//~ COMMANDS
 
       });
     </script>

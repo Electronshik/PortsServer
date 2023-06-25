@@ -57,7 +57,7 @@ int main(void)
 		{
 			std::string cookie = req.get_header_value("Cookie", 0);	//todo: parse first cookie
 
-			const std::regex act_conf_regex("active=([a-z]+)");
+			const std::regex act_conf_regex("active=([a-zA-Z0-9]+)");
 
 			std::smatch cookie_match;
 			if (std::regex_search(cookie, cookie_match, act_conf_regex))
@@ -86,10 +86,14 @@ int main(void)
 		}
 
 		if (!active_conf_finded)
+		{
 			active_config = configurations.at(0);
+			res.set_header("Set-Cookie", "active=" + active_config);
+		}
 
 		auto config = model.GetConfiguration(active_config.c_str());
-		res.set_content(view.GetIndex(configurations, active_config, config), "text/html");
+		auto commands = model.GetCommands(active_config.c_str());
+		res.set_content(view.GetIndex(configurations, active_config, config, commands), "text/html");
 	});
 
 	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request& req, Response& res)
@@ -166,7 +170,27 @@ int main(void)
 
 		if ((!active_config.empty()) && (param_num == 6))
 		{
-			model.UpdateConfiguration(active_config.c_str(), port_config);
+			pattern = "config_new_name=([a-zA-Z0-9]+)";
+			if (std::regex_search(req.body, config_match, pattern))
+			{
+				std::string new_name = config_match[1];
+
+				pattern = "new_config_process=([a-zA-Z0-9]+)";
+				if (std::regex_search(req.body, config_match, pattern))
+				{
+					model.AddConfiguration(new_name.c_str(), port_config);
+					std::cout << "New config added: " << new_name << std::endl;
+				}
+				else
+				{
+					model.RenameConfiguration(active_config.c_str(), new_name.c_str());
+					std::cout << "New name for config: " << new_name << std::endl;
+				}
+			}
+			else
+			{
+				model.UpdateConfiguration(active_config.c_str(), port_config);
+			}
 			res.set_content("saveconfigparams successfully updated!", "text/plain");
 		}
 		else
@@ -215,21 +239,21 @@ int main(void)
 		server.stop();
 	});
 
-	SerialPortConfig PortConfig;
-	model.AddConfiguration("config", PortConfig);
-	PortConfig.Speed = "9600";
-	PortConfig.Stopbits = "2";
-	model.AddConfiguration("test", PortConfig);
+	// SerialPortConfig PortConfig;
+	// model.AddConfiguration("config", PortConfig);
+	// PortConfig.Speed = "9600";
+	// PortConfig.Stopbits = "2";
+	// model.AddConfiguration("test", PortConfig);
 	// model.DeleteConfiguration("config");
-	model.AddCommand("test", "cmdtest", "0xffff");
-	model.AddCommand("test", "cmd2test", "0xffff");
-	model.AddCommand("config", "config cmd", "0x11ff");
-	model.AddCommand("config", "config new cmd", "0x22ff");
+	// model.AddCommand("test", "cmdtest", "0xffff");
+	// model.AddCommand("test", "cmd2test", "0xffff");
+	// model.AddCommand("config", "config cmd", "0x11ff");
+	// model.AddCommand("config", "config new cmd", "0x22ff");
 	// model.DeleteCommand("test", "cmd2test");
 	auto result = model.GetConfigurations();
 	for(auto& el : result)
 	{
-		std::cout << el.c_str() << std::endl;
+		std::cout << "Finded configurations: " << el.c_str() << std::endl;
 	}
 
 	server.listen("localhost", 80);

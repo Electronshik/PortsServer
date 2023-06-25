@@ -4,12 +4,6 @@
 #include <array>
 #include <map>
 
-struct Command
-{
-	std::string Name = "NULL";
-	std::string Cmd = "NULL";
-};
-
 class Model
 {
 	public:
@@ -18,6 +12,7 @@ class Model
 		ConfigList GetConfigurations();
 		SerialPortConfig GetConfiguration(const char *name);
 		void AddConfiguration(const char *name, SerialPortConfig &PortConfig);
+		void RenameConfiguration(const char *name, const char *new_name);
 		void UpdateConfiguration(const char *name, SerialPortConfig &PortConfig);
 		void DeleteConfiguration(const char *name);
 		std::vector<Command> GetCommands(const char *configuration);

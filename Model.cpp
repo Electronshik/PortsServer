@@ -92,6 +92,15 @@ SerialPortConfig Model::GetConfiguration(const char *name)
 	return port_config;
 }
 
+void Model::RenameConfiguration(const char *name, const char *new_name)
+{
+	std::string query = std::format("ALTER TABLE {0} RENAME TO {1}", name, new_name);
+	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
+
+	query = std::format("UPDATE configurations SET name='{0}' WHERE name='{1}'", new_name, name);
+	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
+}
+
 void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig)
 {
 	std::string query = std::format("INSERT INTO configurations (name, speed, databits, parity, stopbits, flowcontrol, format)	\
