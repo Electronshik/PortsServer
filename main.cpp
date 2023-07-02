@@ -6,6 +6,8 @@
 #include <format>
 #include <regex>
 
+#include "SerialPort.h"
+
 std::array<std::string, 3> PortSpeed = 
 {
 	"9600",
@@ -256,5 +258,38 @@ int main(void)
 		std::cout << "Finded configurations: " << el.c_str() << std::endl;
 	}
 
+
+	SerialPortConfig port_config;
+	std::string name = "\\\\.\\COM3";
+	SerialPort Port(name, port_config);
+	SerialPort TwoPort(name, port_config);
+
+	char burr[] = "qwerty\r\n";
+	Port.Write(burr, 8);
+
+	char readBuff[64];
+	memset(readBuff, 0, sizeof(readBuff));
+	int len = Port.Read(readBuff);
+	if(len)
+		printf("First Com Received: %s \r\n", readBuff);
+	else
+		printf("\nReading terminated. Last error %d\n", GetLastError());
+
+	for (size_t i = 0; i < 10; i++)
+	{
+		int len = Port.Read(readBuff);
+		if(len)
+			printf("Com Received: %s \r\n", readBuff);
+	}
+
+	Port.~Port();
+
+	std::vector<std::string> ports = SerialPort::GetPortsList();
+	for(auto &port : ports)
+	{
+		std::cout << "Port exist: " << port << std::endl;
+	}
+
+	printf("server.listen \r\n");
 	server.listen("localhost", 80);
 }

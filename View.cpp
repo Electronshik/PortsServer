@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "SerialPort.h"
+
 using namespace inja;
 
 static Environment InjaEnv {"../html/"};
@@ -26,7 +28,7 @@ std::string View::GetIndex(std::vector<std::string> &configurations, std::string
 
 	json data;
 	data["header"] = "Active configuration:";
-	data["ports"] = {"COM1", "COM2"};
+	data["ports"] = SerialPort::GetPortsList();	//{"COM1", "COM2"};
 	data["configs"] = configurations;
 	data["config_selected"] = active_config;
 
