@@ -46,14 +46,18 @@ std::string View::GetIndex(std::vector<std::string> &configurations, std::string
 
 	std::string rendered_commands;
 	json cmds;
+	int cmd_iter = 1;
 	for (Command &cmd : commands)
 	{
 		cmds["name"] = cmd.Name;
 		cmds["cmd"] = cmd.Cmd;
+		cmds["id"] = "cmd" + std::to_string(cmd_iter);
 		// std::string cmd_template = "<p>{{ name }} : {{ cmd }}</p>";
-		std::string cmd_template = "<div class=\"row\"><div class=\"col-sm-2\"><button type=\"button\" class=\"btn btn-success\">{{ name }}</button></div>	\
-			<div class=\"col-sm-2\"><p>{{ cmd }}</p></div></div>";
+		std::string cmd_template = "<div class=\"row\"><div class=\"col-sm-2\"><button type=\"button\" class=\"btn btn-success\"	\
+			onclick=\"portSendCommand('{{ id }}');\">{{ name }}</button></div>	\
+			<div class=\"col-sm-2\" id=\"{{ id }}\"><p>{{ cmd }}</p></div></div>";
 		rendered_commands.append(InjaEnv.render(cmd_template, cmds));
+		cmd_iter++;
 	}
 
 	// data["commands"] = {{ {"name", "name1"}, {"cmd", "cmd1"} }, { {"name", "name2"}, {"cmd", "cmd2"} }};

@@ -89,6 +89,9 @@
         <div class="row py-5">
             {{ commands }}
         </div>
+        </div class="row py-2">
+          <p id="received_data"></p>
+        </div>
 
       </div><!-- container -->
 
@@ -110,6 +113,19 @@
       }
 
       var params_array = ['config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
+
+      function getConfigPostParams()
+      {
+        postStr = '';
+        for(param_id of params_array)
+        {
+          postStr += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
+          if(param_id != params_array.slice(-1))
+            postStr += '&';
+        }
+        return postStr;
+      }
+
       var new_config_process = false;
 
       function setParamsActive(active, config_name = 'NewName') {
@@ -178,7 +194,6 @@
         });
 
         document.getElementById('save_config_params').addEventListener('click', () => {
-          const xhr = new XMLHttpRequest();
           let active_config_name = document.getElementById('select_config').value;
           let body = 'active_config=' + active_config_name + '&';
           let new_name = document.getElementById('config_new_name').value;
@@ -191,12 +206,15 @@
             body += 'new_config_process=true&';
           }
           console.log(body);
-          for(param_id of params_array)
-          {
-            body += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
-            if(param_id != params_array.slice(-1))
-              body += '&';
-          }
+          body += getConfigPostParams();
+          //for(param_id of params_array)
+          //{
+            //body += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
+            //if(param_id != params_array.slice(-1))
+           //   body += '&';
+          //}
+
+          const xhr = new XMLHttpRequest();
           xhr.open('POST', '/saveconfigparams');
           xhr.onload = () => {
             if (xhr.status !== 200) {
@@ -226,9 +244,117 @@
 
 //~ COMMANDS
 
+        document.getElementById('port_scan').addEventListener('click', () => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', '/getportslist');
+          xhr.onload = () => {
+            if (xhr.status !== 200) {
+              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+              return;
+            }
+            const response = xhr.response;
+
+            select_content = '';
+            ports = response.split(',');
+            ports.forEach(el => select_content += '<option value=\'' + el + '\'>' + el + '</option>');
+            document.getElementById('select_ports').innerHTML = select_content;
+            console.log(response);
+          };
+          xhr.onerror = () => {
+            console.log(`Ошибка при выполнении запроса`);
+          };
+          xhr.send();
+        });
+
+        let recvTimerId;
+        function enablePortCommunication(enable = false) {
+          document.getElementById('select_ports').disabled = enable;
+          document.getElementById('port_open').disabled = enable;
+          document.getElementById('port_close').disabled = !enable;
+          if (enable)
+          {
+            recvTimerId = setInterval(() => {
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', '/readfromport');
+              xhr.onload = () => {
+                if (xhr.status !== 200) {
+                  console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+                  return;
+                }
+                const response = xhr.response;
+                document.getElementById('received_data').innerHTML += response;
+                console.log(response);
+              };
+              xhr.onerror = () => {
+                console.log(`Ошибка при выполнении запроса`);
+              };
+              xhr.send();
+            }, 1000)
+          }
+          else
+          {
+            clearInterval(recvTimerId);
+          }
+        }
+
+        document.getElementById('port_open').addEventListener('click', () => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/openport');
+          xhr.onload = () => {
+            if (xhr.status !== 200) {
+              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+              return;
+            }
+            const response = xhr.response;
+            enablePortCommunication(true);
+            console.log(response);
+          };
+          xhr.onerror = () => {
+            console.log(`Ошибка при выполнении запроса`);
+          };
+          xhr.send('port=' + document.getElementById('select_ports').value + '&' + getConfigPostParams());
+        });
+
+        document.getElementById('port_close').addEventListener('click', () => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/closeport');
+          xhr.onload = () => {
+            if (xhr.status !== 200) {
+              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+              return;
+            }
+            const response = xhr.response;
+            enablePortCommunication(false);
+            console.log(response);
+          };
+          xhr.onerror = () => {
+            console.log(`Ошибка при выполнении запроса`);
+          };
+          xhr.send('port=' + document.getElementById('select_ports').value);
+        });
+
 //~ COMMANDS
 
       });
+
+      function portSendCommand(cmd_id)
+      {
+        console.log(document.getElementById(cmd_id).innerText);
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/sendtoport?cmd=' + document.getElementById(cmd_id).innerText);
+        xhr.onload = () => {
+          if (xhr.status !== 200) {
+            console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+            return;
+          }
+          const response = xhr.response;
+          console.log(response);
+        };
+        xhr.onerror = () => {
+          console.log(`Ошибка при выполнении запроса`);
+        };
+        xhr.send();
+      }
     </script>
   </body>
 </html>

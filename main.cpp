@@ -5,6 +5,7 @@
 #include <iostream>
 #include <format>
 #include <regex>
+#include <memory>
 
 #include "SerialPort.h"
 
@@ -40,6 +41,55 @@ std::array<std::string, 2> PortFlowcontrol =
 	"Yes"
 };
 
+bool ParsePortConfig(const std::string &str, SerialPortConfig *config)
+{
+	std::smatch config_match;
+	int param_num = 0;
+
+	std::regex pattern("config_speed=([a-zA-Z0-9]+)");
+	if (std::regex_search(str, config_match, pattern))
+	{
+		param_num++;
+		config->Speed = config_match[1];
+	}
+
+	pattern = "config_databits=([a-zA-Z0-9]+)";
+	if (std::regex_search(str, config_match, pattern))
+	{
+		param_num++;
+		config->Databits = config_match[1];
+	}
+
+	pattern = "config_parity=([a-zA-Z0-9]+)";
+	if (std::regex_search(str, config_match, pattern))
+	{
+		param_num++;
+		config->Parity = config_match[1];
+	}
+
+	pattern = "config_stopbits=([a-zA-Z0-9]+)";
+	if (std::regex_search(str, config_match, pattern))
+	{
+		param_num++;
+		config->Stopbits = config_match[1];
+	}
+
+	pattern = "config_flowcontrol=([a-zA-Z0-9]+)";
+	if (std::regex_search(str, config_match, pattern))
+	{
+		param_num++;
+		config->Flowcontrol = config_match[1];
+	}
+
+	// std::cout << "Param Speed: " << config->Speed << std::endl;
+	// std::cout << "Param Databits: " << config->Databits << std::endl;
+	// std::cout << "Param Parity: " << config->Parity << std::endl;
+	// std::cout << "Param Stopbits: " << config->Stopbits << std::endl;
+	// std::cout << "Param Flowcontrol: " << config->Flowcontrol << std::endl;
+
+	return param_num == 5;
+}
+
 int main(void)
 {
 	using namespace httplib;
@@ -47,6 +97,7 @@ int main(void)
 	Server server;
 	Model model("Configurations.sqlite");
 	View view;
+	std::vector<std::unique_ptr<SerialPort>> OpenedPorts;
 
 	server.Get("/", [&view, &model](const Request& req, Response& res)
 	{
@@ -118,18 +169,17 @@ int main(void)
 	server.Post("/saveconfigparams", [&model](const Request& req, Response& res)
 	{
 		std::smatch config_match;
-		unsigned int param_num = 0;
 		SerialPortConfig port_config;
 		std::string active_config = "";
 
 		std::regex pattern("active_config=([a-zA-Z0-9]+)");
 		if (std::regex_search(req.body, config_match, pattern))
 		{
-			param_num++;
 			active_config = config_match[1];
 			std::cout << "active_config: " << active_config << std::endl;
 		}
 
+/*
 		pattern = "config_speed=([a-zA-Z0-9]+)";
 		if (std::regex_search(req.body, config_match, pattern))
 		{
@@ -169,8 +219,8 @@ int main(void)
 			port_config.Flowcontrol = config_match[1];
 			std::cout << "port_config.Flowcontrol: " << port_config.Flowcontrol << std::endl;
 		}
-
-		if ((!active_config.empty()) && (param_num == 6))
+*/
+		if ((!active_config.empty()) && ParsePortConfig(req.body, &port_config))
 		{
 			pattern = "config_new_name=([a-zA-Z0-9]+)";
 			if (std::regex_search(req.body, config_match, pattern))
@@ -225,6 +275,91 @@ int main(void)
 	// 	res.set_content("getcommands requested!", "text/plain");
 	// });
 
+	server.Get("/getportslist", [](const Request& req, Response& res)
+	{
+		std::vector<std::string> ports = SerialPort::GetPortsList();
+		std::string content;
+		for(auto &port : ports)
+		{
+			content.append(port);
+			if(port != ports.back())
+				content.append(",");
+			std::cout << "Port exist: " << port << std::endl;
+		}
+		res.set_content(content, "text/plain");
+	});
+
+	server.Post("/openport", [&OpenedPorts](const Request& req, Response& res)
+	{
+		std::smatch config_match;
+		std::string port_name = "";
+
+		std::regex pattern("port=([a-zA-Z0-9]+)");
+		if (std::regex_search(req.body, config_match, pattern))
+		{
+			port_name = config_match[1];
+			std::cout << "Param Port Name: " << port_name << std::endl;
+
+			SerialPortConfig port_config;
+			ParsePortConfig(req.body, &port_config);
+			OpenedPorts.push_back(std::make_unique<SerialPort>(port_name, port_config));
+			std::cout << "Port added: " << port_name << ", Opened ports num: %d" << OpenedPorts.size() << std::endl;
+		}
+		std::cout << "Post openport: " << req.body << std::endl;
+		res.set_content("/openport", "text/plain");
+	});
+
+	server.Post("/closeport", [&OpenedPorts](const Request& req, Response& res)
+	{
+		std::smatch config_match;
+		std::string port_name = "";
+
+		std::regex pattern("port=([a-zA-Z0-9]+)");
+		if (std::regex_search(req.body, config_match, pattern))
+		{
+			port_name = config_match[1];
+			std::cout << "Param Port Name: " << port_name << std::endl;
+
+			auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<SerialPort>& ptr){ return ptr->GetName() == port_name; });
+			if (it != OpenedPorts.end())
+			{
+				OpenedPorts.erase(it);
+				std::cout << "Port removed: " << port_name << std::endl;
+			}
+		}
+		std::cout << "Post closeport: " << req.body << std::endl;
+		res.set_content("/closeport", "text/plain");
+	});
+
+	server.Get("/sendtoport", [&OpenedPorts](const Request& req, Response& res)
+	{
+		if (!OpenedPorts.empty())
+		{
+			std::string cmd = req.get_param_value("cmd");
+			(OpenedPorts.at(0).get())->Write((char*)cmd.c_str(), cmd.length());
+			std::cout << "Send to port: " << (OpenedPorts.at(0).get())->GetName() << ", Val: " << cmd << std::endl;
+		}
+		std::cout << "/sendtoport:" << req.get_param_value("cmd") << std::endl;
+		res.set_content("Ok", "text/plain");
+	});	
+
+	server.Get("/readfromport", [&OpenedPorts](const Request& req, Response& res)
+	{
+		std::string answer = "";
+		if (!OpenedPorts.empty())
+		{
+			char buff[64];
+			int len = (OpenedPorts.at(0).get())->Read(buff);
+			for (int i = 0; i < len; i++)
+				answer += buff[i];
+
+			if (answer != "")
+				std::cout << "Read from port: " << (OpenedPorts.at(0).get())->GetName() << ", Val: " << answer << std::endl;
+		}
+		std::cout << "/readfromport:" << req.get_param_value("cmd") << std::endl;
+		res.set_content(answer, "text/plain");
+	});	
+
 	server.Get("/body-header-param", [](const Request& req, Response& res)
 	{
 		if (req.has_header("Content-Length")) {
@@ -258,7 +393,7 @@ int main(void)
 		std::cout << "Finded configurations: " << el.c_str() << std::endl;
 	}
 
-
+/*
 	SerialPortConfig port_config;
 	std::string name = "\\\\.\\COM3";
 	SerialPort Port(name, port_config);
@@ -283,7 +418,7 @@ int main(void)
 	}
 
 	Port.~Port();
-
+*/
 	std::vector<std::string> ports = SerialPort::GetPortsList();
 	for(auto &port : ports)
 	{

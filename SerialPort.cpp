@@ -1,7 +1,26 @@
 #include "SerialPort.h"
 
+std::vector<std::string> SerialPort::GetPortsList()
+{
+	COMMCONFIG CommConfig;
+	DWORD size;
+
+	std::vector<std::string> result;
+
+	for (int i = 0; i <= 255; i++)
+	{
+		size = sizeof CommConfig;
+		std::string port_name = "COM" + std::to_string(i);
+		if(GetDefaultCommConfig((LPCSTR)port_name.c_str(), &CommConfig, &size) || size > sizeof CommConfig)
+			result.push_back(port_name);
+	}
+
+	return result;
+}
+
 SerialPort::SerialPort(std::string &name, SerialPortConfig &port_config)
 {
+	this->name = name;
 	std::string win_name = "\\\\.\\" + name;
 
 	this->port = CreateFile((LPCSTR)win_name.c_str(), GENERIC_READ | GENERIC_WRITE, 
@@ -60,22 +79,9 @@ SerialPort::~SerialPort()
 	CloseHandle(this->port);
 }
 
-std::vector<std::string> SerialPort::GetPortsList()
+std::string SerialPort::GetName()
 {
-	COMMCONFIG CommConfig;
-	DWORD size;
-
-	std::vector<std::string> result;
-
-	for (int i = 0; i <= 255; i++)
-	{
-		size = sizeof CommConfig;
-		std::string port_name = "COM" + std::to_string(i);
-		if(GetDefaultCommConfig((LPCSTR)port_name.c_str(), &CommConfig, &size) || size > sizeof CommConfig)
-			result.push_back(port_name);
-	}
-
-	return result;
+	return this->name;
 }
 
 void SerialPort::Write(char* buff, int len)
