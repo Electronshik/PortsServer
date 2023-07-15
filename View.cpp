@@ -10,7 +10,7 @@
 
 using namespace inja;
 
-static Environment InjaEnv {"../html/"};
+static Environment InjaEnv {"../../html/"};
 
 View::View()
 {
@@ -31,6 +31,9 @@ std::string View::GetIndex(std::vector<std::string> &configurations, std::string
 	data["ports"] = SerialPort::GetPortsList();	//{"COM1", "COM2"};
 	data["configs"] = configurations;
 	data["config_selected"] = active_config;
+
+	data["error_code_ok"] = ErrorString[ErrorCode::Ok];
+	data["error_code_error"] = ErrorString[ErrorCode::Error];
 
 	data["all_port_speed"] = PortSpeed;
 	data["all_port_databits"] = PortDatabits;

@@ -2,12 +2,17 @@
 #include "httplib.h"
 #include "Model.h"
 #include "View.h"
-#include <iostream>
 #include <format>
 #include <regex>
 #include <memory>
 
 #include "SerialPort.h"
+#include "SerialApi.h"
+
+std::map<ErrorCode, std::string> ErrorString = {
+	{ ErrorCode::Ok, "Ok" },
+	{ ErrorCode::Error, "Error" }
+};
 
 std::array<std::string, 3> PortSpeed = 
 {
@@ -101,10 +106,6 @@ int main(void)
 
 	server.Get("/", [&view, &model](const Request& req, Response& res)
 	{
-		// std::ifstream index("../html/index.html");
-		// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
-		// std::cout << req.path << " Ans len:" << body.length() << std::endl;
-
 		std::string active_config = "";
 		if (req.has_header("Cookie"))
 		{
@@ -151,7 +152,7 @@ int main(void)
 
 	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request& req, Response& res)
 	{
-		std::string static_path = "../" + req.matches[1].str();
+		std::string static_path = "../../" + req.matches[1].str();
 		std::ifstream index(static_path.c_str());
 		std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 		std::cout << "Static path: " << static_path << ", Ext: " << req.matches[2].str() << std::endl;
@@ -179,47 +180,6 @@ int main(void)
 			std::cout << "active_config: " << active_config << std::endl;
 		}
 
-/*
-		pattern = "config_speed=([a-zA-Z0-9]+)";
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			param_num++;
-			port_config.Speed = config_match[1];
-			std::cout << "port_config.Speed: " << port_config.Speed << std::endl;
-		}
-
-		pattern = "config_databits=([a-zA-Z0-9]+)";
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			param_num++;
-			port_config.Databits = config_match[1];
-			std::cout << "port_config.Databits: " << port_config.Databits << std::endl;
-		}
-
-		pattern = "config_parity=([a-zA-Z0-9]+)";
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			param_num++;
-			port_config.Parity = config_match[1];
-			std::cout << "port_config.Parity: " << port_config.Parity << std::endl;
-		}
-
-		pattern = "config_stopbits=([a-zA-Z0-9]+)";
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			param_num++;
-			port_config.Stopbits = config_match[1];
-			std::cout << "port_config.Stopbits: " << port_config.Stopbits << std::endl;
-		}
-
-		pattern = "config_flowcontrol=([a-zA-Z0-9]+)";
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			param_num++;
-			port_config.Flowcontrol = config_match[1];
-			std::cout << "port_config.Flowcontrol: " << port_config.Flowcontrol << std::endl;
-		}
-*/
 		if ((!active_config.empty()) && ParsePortConfig(req.body, &port_config))
 		{
 			pattern = "config_new_name=([a-zA-Z0-9]+)";
@@ -267,14 +227,6 @@ int main(void)
 	// 	res.set_content(response.c_str(), "text/javascript");
 	// });
 
-	// server.Get("/getcommands", [&model](const Request& req, Response& res)
-	// {
-	// 	auto result = model.GetCommands("config");
-	// 	for (auto &el : result)
-    //     	std::cout << '[' << el.Name << "] = " << el.Cmd << "; ";
-	// 	res.set_content("getcommands requested!", "text/plain");
-	// });
-
 	server.Get("/getportslist", [](const Request& req, Response& res)
 	{
 		std::vector<std::string> ports = SerialPort::GetPortsList();
@@ -284,15 +236,16 @@ int main(void)
 			content.append(port);
 			if(port != ports.back())
 				content.append(",");
-			std::cout << "Port exist: " << port << std::endl;
+			std::cout << "Port exists: " << port << std::endl;
 		}
 		res.set_content(content, "text/plain");
 	});
 
-	server.Post("/openport", [&OpenedPorts](const Request& req, Response& res)
+	server.Post("/openport", [](const Request& req, Response& res)
 	{
 		std::smatch config_match;
 		std::string port_name = "";
+		std::string answer = ErrorString[ErrorCode::Error];
 
 		std::regex pattern("port=([a-zA-Z0-9]+)");
 		if (std::regex_search(req.body, config_match, pattern))
@@ -301,63 +254,75 @@ int main(void)
 			std::cout << "Param Port Name: " << port_name << std::endl;
 
 			SerialPortConfig port_config;
-			ParsePortConfig(req.body, &port_config);
-			OpenedPorts.push_back(std::make_unique<SerialPort>(port_name, port_config));
-			std::cout << "Port added: " << port_name << ", Opened ports num: %d" << OpenedPorts.size() << std::endl;
+			if (ParsePortConfig(req.body, &port_config))
+			{
+				// OpenedPorts.push_back(std::make_unique<SerialPort>(port_name, port_config));
+				SerialApi::OpenPort(port_name, port_config);
+				answer = ErrorString[ErrorCode::Ok];
+				// std::cout << "Port added: " << port_name << ", Opened ports num: %d" << OpenedPorts.size() << std::endl;
+			}
 		}
 		std::cout << "Post openport: " << req.body << std::endl;
-		res.set_content("/openport", "text/plain");
+		res.set_content(answer, "text/plain");
 	});
 
-	server.Post("/closeport", [&OpenedPorts](const Request& req, Response& res)
+	server.Post("/closeport", [](const Request& req, Response& res)
 	{
 		std::smatch config_match;
 		std::string port_name = "";
+		std::string answer = ErrorString[ErrorCode::Error];
 
 		std::regex pattern("port=([a-zA-Z0-9]+)");
 		if (std::regex_search(req.body, config_match, pattern))
 		{
 			port_name = config_match[1];
 			std::cout << "Param Port Name: " << port_name << std::endl;
-
-			auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<SerialPort>& ptr){ return ptr->GetName() == port_name; });
-			if (it != OpenedPorts.end())
-			{
-				OpenedPorts.erase(it);
-				std::cout << "Port removed: " << port_name << std::endl;
-			}
+			SerialApi::ClosePort(port_name);
+			answer = ErrorString[ErrorCode::Ok];
 		}
 		std::cout << "Post closeport: " << req.body << std::endl;
-		res.set_content("/closeport", "text/plain");
+		res.set_content(answer, "text/plain");
 	});
 
-	server.Get("/sendtoport", [&OpenedPorts](const Request& req, Response& res)
+	server.Post("/sendtoport", [](const Request& req, Response& res)
 	{
-		if (!OpenedPorts.empty())
+		std::smatch config_match;
+		std::string port_name = "";
+		std::string answer = ErrorString[ErrorCode::Error];
+
+		std::regex pattern("port=([a-zA-Z0-9]+)");
+		if (std::regex_search(req.body, config_match, pattern))
 		{
+			port_name = config_match[1];
 			std::string cmd = req.get_param_value("cmd");
-			(OpenedPorts.at(0).get())->Write((char*)cmd.c_str(), cmd.length());
-			std::cout << "Send to port: " << (OpenedPorts.at(0).get())->GetName() << ", Val: " << cmd << std::endl;
+			std::cout << "Param Port Name: " << port_name << ", Cmd: " << cmd << std::endl;
+			SerialApi::Send(port_name, cmd);
+			answer = ErrorString[ErrorCode::Ok];
 		}
+
 		std::cout << "/sendtoport:" << req.get_param_value("cmd") << std::endl;
-		res.set_content("Ok", "text/plain");
+		res.set_content(answer, "text/plain");
 	});	
 
 	server.Get("/readfromport", [&OpenedPorts](const Request& req, Response& res)
 	{
-		std::string answer = "";
-		if (!OpenedPorts.empty())
-		{
-			char buff[64];
-			int len = (OpenedPorts.at(0).get())->Read(buff);
-			for (int i = 0; i < len; i++)
-				answer += buff[i];
+		std::smatch config_match;
+		std::string port_name = "";
+		std::string received = "";
 
-			if (answer != "")
-				std::cout << "Read from port: " << (OpenedPorts.at(0).get())->GetName() << ", Val: " << answer << std::endl;
+		std::regex pattern("port=([a-zA-Z0-9]+)");
+		if (std::regex_search(req.body, config_match, pattern))
+		{
+			port_name = config_match[1];
+			SerialApi::Receive(port_name);
+			received = ErrorString[ErrorCode::Ok];
 		}
-		std::cout << "/readfromport:" << req.get_param_value("cmd") << std::endl;
-		res.set_content(answer, "text/plain");
+
+		if (received != "")
+			std::cout << "Read from port: " << port_name << ", Val: " << received << std::endl;
+
+		std::cout << "/readfromport:" << received << std::endl;
+		res.set_content(received, "text/plain");
 	});	
 
 	server.Get("/body-header-param", [](const Request& req, Response& res)
@@ -422,7 +387,7 @@ int main(void)
 	std::vector<std::string> ports = SerialPort::GetPortsList();
 	for(auto &port : ports)
 	{
-		std::cout << "Port exist: " << port << std::endl;
+		std::cout << "Port exists: " << port << std::endl;
 	}
 
 	printf("server.listen \r\n");

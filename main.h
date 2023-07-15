@@ -1,9 +1,19 @@
 #pragma once
+#include <iostream>
 #include <array>
 #include <string>
 #include <vector>
+#include <map>
 
 using ConfigList = std::vector<std::string>;
+
+enum class ErrorCode
+{
+	Ok,
+	Error
+};
+
+extern std::map<ErrorCode, std::string> ErrorString;
 
 extern std::array<std::string, 3> PortSpeed;
 extern std::array<std::string, 2> PortDatabits;

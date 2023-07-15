@@ -102,6 +102,9 @@
     <script src="html/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js"></script>
     <script>
 
+      var ErrorCodeOk = '{{ error_code_ok }}';
+      var ErrorCodeError = '{{ error_code_error }}';
+
       function setCookie(name, value, days) {
         let expires = "";
         if (days) {
@@ -306,7 +309,10 @@
               return;
             }
             const response = xhr.response;
-            enablePortCommunication(true);
+            if (response == ErrorCodeOk)
+            {
+              enablePortCommunication(true);
+            }
             console.log(response);
           };
           xhr.onerror = () => {
@@ -341,19 +347,23 @@
       {
         console.log(document.getElementById(cmd_id).innerText);
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', '/sendtoport?cmd=' + document.getElementById(cmd_id).innerText);
+        xhr.open('POST', '/sendtoport');
         xhr.onload = () => {
           if (xhr.status !== 200) {
             console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
             return;
           }
           const response = xhr.response;
+          if (response == ErrorCodeError)
+          {
+            enablePortCommunication(false);
+          }
           console.log(response);
         };
         xhr.onerror = () => {
           console.log(`Ошибка при выполнении запроса`);
         };
-        xhr.send();
+        xhr.send('port=' + document.getElementById('select_ports').value + '&cmd=' + document.getElementById(cmd_id).innerText);
       }
     </script>
   </body>

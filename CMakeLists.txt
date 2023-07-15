@@ -25,10 +25,10 @@ include_directories(
 )
 
 add_executable(CppServer ${SOURCES})
-add_custom_command(TARGET CppServer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CppServer> ${PROJECT_SOURCE_DIR}/build/CppServer.exe
-    COMMENT "Created ${PROJECT_SOURCE_DIR}/build/CppServer.exe"
-)
+# add_custom_command(TARGET CppServer POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CppServer> ${PROJECT_SOURCE_DIR}/build/CppServer.exe
+#     COMMENT "Created ${PROJECT_SOURCE_DIR}/build/CppServer.exe"
+# )
 
 # set_target_properties(CppServer PROPERTIES
 # 	RUNTIME_OUTPUT_DIRECTORY <debug ${PROJECT_SOURCE_DIR}/build/>
