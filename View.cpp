@@ -29,6 +29,7 @@ std::string View::GetIndex(std::vector<std::string> &configurations, std::string
 	json data;
 	data["header"] = "Active configuration:";
 	data["ports"] = SerialPort::GetPortsList();	//{"COM1", "COM2"};
+	data["port"] = "{{ port }}";
 	data["configs"] = configurations;
 	data["config_selected"] = active_config;
 

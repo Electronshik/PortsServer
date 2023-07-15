@@ -239,6 +239,7 @@ int main(void)
 			std::cout << "Port exists: " << port << std::endl;
 		}
 		res.set_content(content, "text/plain");
+		// res.set_content("C0M1,COM2", "text/plain");
 	});
 
 	server.Post("/openport", [](const Request& req, Response& res)

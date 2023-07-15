@@ -6,6 +6,7 @@
     <title>Bootstrap demo</title>
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous"> -->
     <link href="html/bootstrap-5.3.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   </head>
   <body>
     <div class="container py-5">
@@ -71,19 +72,20 @@
          </div>
       </div>
 
-      <div class="row py-5">
-        <div class="col-sm-2">
-          <p>Available Ports:</p>
-        </div>
-        <div class="col-sm-3">
-          <select class="form-select" id="select_ports" aria-label="Default select example">
-            {% for port in ports %}<option value="{{ port }}">{{ port }}</option>{% endfor %}
-          </select>
-        </div>
-        <div class="col-sm-5">
-          <button type="button" class="btn btn-success" id="port_scan">Rescan Ports</button>
-          <button type="button" class="btn btn-primary" id="port_open">Port Open</button>
-          <button type="button" class="btn btn-primary" id="port_close" disabled>Port Close</button>
+        <div class="row py-5" id="port-buttons">
+          <div class="col-sm-2">
+            <p>Available Ports:</p>
+          </div>
+          <div class="col-sm-3">
+            <select class="form-select" id="select_ports" aria-label="Default select example">
+              <option v-for="port in ports" :value="port">{{ port }}</option>
+            </select>
+          </div>
+          <div class="col-sm-5">
+            <button type="button" class="btn btn-success" id="port_scan" v-on:click="scanPorts">Rescan Ports</button>
+            <button type="button" class="btn btn-primary" id="port_open" v-on:click="openPort">Port Open</button>
+            <button type="button" class="btn btn-primary" id="port_close" v-on:click="closePort" disabled>Port Close</button>
+          </div>
         </div>
 
         <div class="row py-5">
@@ -101,6 +103,71 @@
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script> -->
     <script src="html/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js"></script>
     <script>
+
+      let recvTimerId;
+      function enablePortCommunication(enable = false) {
+        document.getElementById('select_ports').disabled = enable;
+        document.getElementById('port_scan').disabled = enable;
+        document.getElementById('port_open').disabled = enable;
+        document.getElementById('port_close').disabled = !enable;
+        if (enable)
+        {
+          recvTimerId = setInterval(() => {
+            fetch('/readfromport').then((response) => { return response.text() })
+            .then((text) => {
+              document.getElementById('received_data').innerHTML += text;
+              console.log(text);
+            })
+            .catch((error) => console.log(error));
+          }, 1000)
+        }
+        else
+        {
+          clearInterval(recvTimerId);
+        }
+      }
+
+      var app = new Vue({
+        el: '#port-buttons',
+        data: {
+          ports_string : '',
+          numbers: [ 1, 2, 3, 4, 5 ]
+        },
+        computed: {
+          ports: function () { return this.ports_string.split(','); }
+        },
+        methods: {
+          scanPorts : function () {
+            fetch('/getportslist').then((response) => { return response.text() })
+            .then((text) => this.ports_string = text)
+            .catch((error) => console.log(error));
+          },
+          openPort : function () {
+            fetch('/openport', {
+              method: 'POST',
+              body: 'port=' + document.getElementById('select_ports').value + '&' + getConfigPostParams()
+            })
+            .then((response) => { return response.text() })
+            .then((text) => {
+              if (text == ErrorCodeOk) {
+                enablePortCommunication(true);
+              }
+            })
+            .catch((error) => console.log(error));
+          },
+          closePort : function () {
+            fetch('/closeport', {
+              method: 'POST',
+              body: 'port=' + document.getElementById('select_ports').value
+            })
+            .then((response) => { return response.text() })
+            .then((text) => {
+              enablePortCommunication(false);
+            })
+            .catch((error) => console.log(error));
+          },
+        }
+      })
 
       var ErrorCodeOk = '{{ error_code_ok }}';
       var ErrorCodeError = '{{ error_code_error }}';
@@ -174,21 +241,12 @@
           event.preventDefault();
           if (confirm('Are you sure you want to remove this configuration?')) {
             console.log('Thing was saved to the database.');
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', '/deleteconfig?config=' + document.getElementById('select_config').value);
-            xhr.onload = () => {
-              if (xhr.status !== 200) {
-                console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-                return;
-              }
-              const response = xhr.response;
-              console.log(response);
+            fetch('/deleteconfig?config=' + document.getElementById('select_config').value).then((response) => { return response.text() })
+            .then((text) => {
+              console.log(text);
               location.reload();
-            };
-            xhr.onerror = () => {
-              console.log(`Ошибка при выполнении запроса`);
-            };
-            xhr.send();
+            })
+            .catch((error) => console.log(error));
           }
         }, false);
 
@@ -210,32 +268,22 @@
           }
           console.log(body);
           body += getConfigPostParams();
-          //for(param_id of params_array)
-          //{
-            //body += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
-            //if(param_id != params_array.slice(-1))
-           //   body += '&';
-          //}
 
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/saveconfigparams');
-          xhr.onload = () => {
-            if (xhr.status !== 200) {
-              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-              return;
-            }
-            const response = xhr.response;
-            console.log(response);
+          fetch('/saveconfigparams', {
+            method: 'POST',
+            body: body
+          })
+          .then((response) => { return response.text() })
+          .then((text) => {
+            console.log(text);
             if(active_config_name != new_name)
             {
               setCookie('active', new_name, 1);
               location.reload();
             }
-          };
-          xhr.onerror = () => {
-            console.log(`Ошибка при выполнении запроса`);
-          };
-          xhr.send(body);
+          })
+          .catch((error) => console.log(error));
+
           setParamsActive(false);
         });
 
@@ -247,98 +295,6 @@
 
 //~ COMMANDS
 
-        document.getElementById('port_scan').addEventListener('click', () => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('GET', '/getportslist');
-          xhr.onload = () => {
-            if (xhr.status !== 200) {
-              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-              return;
-            }
-            const response = xhr.response;
-
-            select_content = '';
-            ports = response.split(',');
-            ports.forEach(el => select_content += '<option value=\'' + el + '\'>' + el + '</option>');
-            document.getElementById('select_ports').innerHTML = select_content;
-            console.log(response);
-          };
-          xhr.onerror = () => {
-            console.log(`Ошибка при выполнении запроса`);
-          };
-          xhr.send();
-        });
-
-        let recvTimerId;
-        function enablePortCommunication(enable = false) {
-          document.getElementById('select_ports').disabled = enable;
-          document.getElementById('port_open').disabled = enable;
-          document.getElementById('port_close').disabled = !enable;
-          if (enable)
-          {
-            recvTimerId = setInterval(() => {
-              const xhr = new XMLHttpRequest();
-              xhr.open('GET', '/readfromport');
-              xhr.onload = () => {
-                if (xhr.status !== 200) {
-                  console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-                  return;
-                }
-                const response = xhr.response;
-                document.getElementById('received_data').innerHTML += response;
-                console.log(response);
-              };
-              xhr.onerror = () => {
-                console.log(`Ошибка при выполнении запроса`);
-              };
-              xhr.send();
-            }, 1000)
-          }
-          else
-          {
-            clearInterval(recvTimerId);
-          }
-        }
-
-        document.getElementById('port_open').addEventListener('click', () => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/openport');
-          xhr.onload = () => {
-            if (xhr.status !== 200) {
-              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-              return;
-            }
-            const response = xhr.response;
-            if (response == ErrorCodeOk)
-            {
-              enablePortCommunication(true);
-            }
-            console.log(response);
-          };
-          xhr.onerror = () => {
-            console.log(`Ошибка при выполнении запроса`);
-          };
-          xhr.send('port=' + document.getElementById('select_ports').value + '&' + getConfigPostParams());
-        });
-
-        document.getElementById('port_close').addEventListener('click', () => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/closeport');
-          xhr.onload = () => {
-            if (xhr.status !== 200) {
-              console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-              return;
-            }
-            const response = xhr.response;
-            enablePortCommunication(false);
-            console.log(response);
-          };
-          xhr.onerror = () => {
-            console.log(`Ошибка при выполнении запроса`);
-          };
-          xhr.send('port=' + document.getElementById('select_ports').value);
-        });
-
 //~ COMMANDS
 
       });
@@ -346,25 +302,21 @@
       function portSendCommand(cmd_id)
       {
         console.log(document.getElementById(cmd_id).innerText);
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/sendtoport');
-        xhr.onload = () => {
-          if (xhr.status !== 200) {
-            console.log(`Ошибка ${xhr.status}: ${xhr.statusText}`);
-            return;
-          }
-          const response = xhr.response;
-          if (response == ErrorCodeError)
+        fetch('/sendtoport', {
+          method: 'POST',
+          body: 'port=' + document.getElementById('select_ports').value + '&cmd=' + document.getElementById(cmd_id).innerText
+        })
+        .then((response) => { return response.text() })
+        .then((text) => {
+          if (text == ErrorCodeError)
           {
             enablePortCommunication(false);
           }
-          console.log(response);
-        };
-        xhr.onerror = () => {
-          console.log(`Ошибка при выполнении запроса`);
-        };
-        xhr.send('port=' + document.getElementById('select_ports').value + '&cmd=' + document.getElementById(cmd_id).innerText);
+          console.log(text);
+        })
+        .catch((error) => console.log(error));
       }
+
     </script>
   </body>
 </html>
