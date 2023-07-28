@@ -59,30 +59,30 @@ SerialPortConfig Model::GetConfiguration(const char *name)
 {
 	SerialPortConfig port_config;
 
-	auto clbk = [](SerialPortConfig *result, int argc, char **azColName, char **argv) {
+	auto clbk = [](SerialPortConfig *port_config, int argc, char **azColName, char **argv) {
 		for (size_t i = 0; i < argc; i++)
 		{
 			// std::string param = argv[i];
 			// printf("Col: %s : %s\n", azColName[i], argv[i]);
 			if (strcmp(azColName[i], "speed") == 0)
 			{
-				result->Speed.assign(argv[i]);
+				port_config->Speed.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "databits") == 0)
 			{
-				result->Databits.assign(argv[i]);
+				port_config->Databits.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "parity") == 0)
 			{
-				result->Parity.assign(argv[i]);
+				port_config->Parity.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "stopbits") == 0)
 			{
-				result->Stopbits.assign(argv[i]);
+				port_config->Stopbits.assign(argv[i]);
 			}
 			else if (strcmp(azColName[i], "flowcontrol") == 0)
 			{
-				result->Flowcontrol.assign(argv[i]);
+				port_config->Flowcontrol.assign(argv[i]);
 			}
 		}
 	};
@@ -139,7 +139,7 @@ std::vector<Command> Model::GetCommands(const char *configuration)
 {
 	std::vector<Command> commands_list;
 
-	auto clbk = [](std::vector<Command> *result, int argc, char **azColName, char **argv) {
+	auto clbk = [](std::vector<Command> *commands_list, int argc, char **azColName, char **argv) {
 		Command command;
 		for (size_t i = 0; i < argc; i++)
 		{
@@ -153,7 +153,7 @@ std::vector<Command> Model::GetCommands(const char *configuration)
 				command.Cmd = argv[i];
 			}
 		}
-		result->push_back(command);
+		commands_list->push_back(command);
 	};
 
 	std::string query = std::format("SELECT id, name, command FROM {}", configuration);

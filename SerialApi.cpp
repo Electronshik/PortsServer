@@ -12,6 +12,11 @@ namespace SerialApi {
 		{ ErrorCode::PortClosed, "PortClosed" },
 	};
 
+	std::vector<std::string> GetPortsList()
+	{
+		return SerialPort::GetPortsList();
+	}
+
 	ErrorCode OpenPort(std::string &port_name, SerialPortConfig &port_config)
 	{
 		OpenedPorts.push_back(std::make_unique<SerialPort>(port_name, port_config));

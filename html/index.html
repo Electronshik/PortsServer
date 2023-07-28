@@ -113,7 +113,7 @@
         if (enable)
         {
           recvTimerId = setInterval(() => {
-            fetch('/readfromport').then((response) => { return response.text() })
+            fetch('/api/readfromport').then((response) => { return response.text() })
             .then((text) => {
               document.getElementById('received_data').innerHTML += text;
               console.log(text);
@@ -138,17 +138,18 @@
         },
         methods: {
           scanPorts : function () {
-            fetch('/getportslist').then((response) => { return response.text() })
+            fetch('/api/getportslist').then((response) => { return response.text() })
             .then((text) => this.ports_string = text)
             .catch((error) => console.log(error));
           },
           openPort : function () {
-            fetch('/openport', {
+            fetch('/api/openport', {
               method: 'POST',
               body: 'port=' + document.getElementById('select_ports').value + '&' + getConfigPostParams()
             })
             .then((response) => { return response.text() })
             .then((text) => {
+              console.log(text);
               if (text == ErrorCodeOk) {
                 enablePortCommunication(true);
               }
@@ -156,7 +157,7 @@
             .catch((error) => console.log(error));
           },
           closePort : function () {
-            fetch('/closeport', {
+            fetch('/api/closeport', {
               method: 'POST',
               body: 'port=' + document.getElementById('select_ports').value
             })
@@ -302,7 +303,7 @@
       function portSendCommand(cmd_id)
       {
         console.log(document.getElementById(cmd_id).innerText);
-        fetch('/sendtoport', {
+        fetch('/api/sendtoport', {
           method: 'POST',
           body: 'port=' + document.getElementById('select_ports').value + '&cmd=' + document.getElementById(cmd_id).innerText
         })

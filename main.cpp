@@ -2,12 +2,14 @@
 #include "httplib.h"
 #include "Model.h"
 #include "View.h"
+#include "Api.h"
 #include <format>
 #include <regex>
 #include <memory>
 
 #include "SerialPort.h"
-#include "SerialApi.h"
+
+using namespace httplib;
 
 std::map<ErrorCode, std::string> ErrorString = {
 	{ ErrorCode::Ok, "Ok" },
@@ -95,14 +97,23 @@ bool ParsePortConfig(const std::string &str, SerialPortConfig *config)
 	return param_num == 5;
 }
 
+ErrorCode ParseGetPostParam(const std::string &str, const std::string &name, std::string &result)
+{
+	std::smatch match;
+	std::regex pattern(name + "=([a-zA-Z0-9]+)");
+	if (std::regex_search(str, match, pattern))
+	{
+		result = match[1];
+		return ErrorCode::Ok;
+	}
+	return ErrorCode::Error;
+}
+
 int main(void)
 {
-	using namespace httplib;
-
 	Server server;
 	Model model("Configurations.sqlite");
 	View view;
-	std::vector<std::unique_ptr<SerialPort>> OpenedPorts;
 
 	server.Get("/", [&view, &model](const Request& req, Response& res)
 	{
@@ -110,15 +121,7 @@ int main(void)
 		if (req.has_header("Cookie"))
 		{
 			std::string cookie = req.get_header_value("Cookie", 0);	//todo: parse first cookie
-
-			const std::regex act_conf_regex("active=([a-zA-Z0-9]+)");
-
-			std::smatch cookie_match;
-			if (std::regex_search(cookie, cookie_match, act_conf_regex))
-			{
-				active_config = cookie_match[1];
-			}
-
+			ParseGetPostParam(cookie, "active", active_config);
 			std::cout << "Active config (from cookie): " << active_config << std::endl;
 		}
 
@@ -126,20 +129,20 @@ int main(void)
 		// res.set_header("Set-Cookie", "last=first");
 
 		ConfigList configurations = model.GetConfigurations();
-		bool active_conf_finded = false;
+		bool active_conf_found = false;
 		if (active_config != "")
 		{
 			for ( auto &config : configurations)
 			{
 				if (config == active_config)
 				{
-					active_conf_finded = true;
+					active_conf_found = true;
 					std::cout << "Active config finded: " << active_config << std::endl;
 				}
 			}
 		}
 
-		if (!active_conf_finded)
+		if (!active_conf_found)
 		{
 			active_config = configurations.at(0);
 			res.set_header("Set-Cookie", "active=" + active_config);
@@ -169,26 +172,19 @@ int main(void)
 
 	server.Post("/saveconfigparams", [&model](const Request& req, Response& res)
 	{
-		std::smatch config_match;
 		SerialPortConfig port_config;
 		std::string active_config = "";
 
-		std::regex pattern("active_config=([a-zA-Z0-9]+)");
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			active_config = config_match[1];
-			std::cout << "active_config: " << active_config << std::endl;
-		}
+		ParseGetPostParam(req.body, "active_config", active_config);
+		std::cout << "active_config: " << active_config << std::endl;
 
 		if ((!active_config.empty()) && ParsePortConfig(req.body, &port_config))
 		{
-			pattern = "config_new_name=([a-zA-Z0-9]+)";
-			if (std::regex_search(req.body, config_match, pattern))
+			std::string new_name = "";
+			if (ParseGetPostParam(req.body, "config_new_name", new_name) == ErrorCode::Ok)
 			{
-				std::string new_name = config_match[1];
-
-				pattern = "new_config_process=([a-zA-Z0-9]+)";
-				if (std::regex_search(req.body, config_match, pattern))
+				std::string new_config_process_flag = "";
+				if (ParseGetPostParam(req.body, "new_config_process", new_config_process_flag) == ErrorCode::Ok)
 				{
 					model.AddConfiguration(new_name.c_str(), port_config);
 					std::cout << "New config added: " << new_name << std::endl;
@@ -227,104 +223,11 @@ int main(void)
 	// 	res.set_content(response.c_str(), "text/javascript");
 	// });
 
-	server.Get("/getportslist", [](const Request& req, Response& res)
-	{
-		std::vector<std::string> ports = SerialPort::GetPortsList();
-		std::string content;
-		for(auto &port : ports)
-		{
-			content.append(port);
-			if(port != ports.back())
-				content.append(",");
-			std::cout << "Port exists: " << port << std::endl;
-		}
-		res.set_content(content, "text/plain");
-		// res.set_content("C0M1,COM2", "text/plain");
-	});
-
-	server.Post("/openport", [](const Request& req, Response& res)
-	{
-		std::smatch config_match;
-		std::string port_name = "";
-		std::string answer = ErrorString[ErrorCode::Error];
-
-		std::regex pattern("port=([a-zA-Z0-9]+)");
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			port_name = config_match[1];
-			std::cout << "Param Port Name: " << port_name << std::endl;
-
-			SerialPortConfig port_config;
-			if (ParsePortConfig(req.body, &port_config))
-			{
-				// OpenedPorts.push_back(std::make_unique<SerialPort>(port_name, port_config));
-				SerialApi::OpenPort(port_name, port_config);
-				answer = ErrorString[ErrorCode::Ok];
-				// std::cout << "Port added: " << port_name << ", Opened ports num: %d" << OpenedPorts.size() << std::endl;
-			}
-		}
-		std::cout << "Post openport: " << req.body << std::endl;
-		res.set_content(answer, "text/plain");
-	});
-
-	server.Post("/closeport", [](const Request& req, Response& res)
-	{
-		std::smatch config_match;
-		std::string port_name = "";
-		std::string answer = ErrorString[ErrorCode::Error];
-
-		std::regex pattern("port=([a-zA-Z0-9]+)");
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			port_name = config_match[1];
-			std::cout << "Param Port Name: " << port_name << std::endl;
-			SerialApi::ClosePort(port_name);
-			answer = ErrorString[ErrorCode::Ok];
-		}
-		std::cout << "Post closeport: " << req.body << std::endl;
-		res.set_content(answer, "text/plain");
-	});
-
-	server.Post("/sendtoport", [](const Request& req, Response& res)
-	{
-		std::smatch config_match;
-		std::string port_name = "";
-		std::string answer = ErrorString[ErrorCode::Error];
-
-		std::regex pattern("port=([a-zA-Z0-9]+)");
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			port_name = config_match[1];
-			std::string cmd = req.get_param_value("cmd");
-			std::cout << "Param Port Name: " << port_name << ", Cmd: " << cmd << std::endl;
-			SerialApi::Send(port_name, cmd);
-			answer = ErrorString[ErrorCode::Ok];
-		}
-
-		std::cout << "/sendtoport:" << req.get_param_value("cmd") << std::endl;
-		res.set_content(answer, "text/plain");
-	});	
-
-	server.Get("/readfromport", [&OpenedPorts](const Request& req, Response& res)
-	{
-		std::smatch config_match;
-		std::string port_name = "";
-		std::string received = "";
-
-		std::regex pattern("port=([a-zA-Z0-9]+)");
-		if (std::regex_search(req.body, config_match, pattern))
-		{
-			port_name = config_match[1];
-			SerialApi::Receive(port_name);
-			received = ErrorString[ErrorCode::Ok];
-		}
-
-		if (received != "")
-			std::cout << "Read from port: " << port_name << ", Val: " << received << std::endl;
-
-		std::cout << "/readfromport:" << received << std::endl;
-		res.set_content(received, "text/plain");
-	});	
+	server.Get("/api/getportslist", Api::GetPortsList);
+	server.Post("/api/openport", Api::OpenPort);
+	server.Post("/api/closeport", Api::ClosePort);
+	server.Post("/api/sendtoport", Api::SendToPort);
+	server.Get("/api/readfromport", Api::ReadFromPort);
 
 	server.Get("/body-header-param", [](const Request& req, Response& res)
 	{

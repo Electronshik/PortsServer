@@ -37,3 +37,6 @@ struct Command
 	std::string Name = "NULL";
 	std::string Cmd = "NULL";
 };
+
+bool ParsePortConfig(const std::string &str, SerialPortConfig *config);
+ErrorCode ParseGetPostParam(const std::string &str, const std::string &name, std::string &result);
