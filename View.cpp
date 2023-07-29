@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "SerialPort.h"
+#include "SerialApi.h"
 
 using namespace inja;
 
@@ -20,15 +20,15 @@ View::~View()
 {
 }
 
-std::string View::GetIndex(std::vector<std::string> &configurations, std::string &active_config,
-	SerialPortConfig &port_config, std::vector<Command> &commands)
+auto View::GetIndex(std::vector<std::string> &configurations, std::string &active_config,
+	SerialPortConfig &port_config, std::vector<Command> &commands) -> std::string
 {
 	// std::ifstream index("../html/index.html");
 	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 
 	json data;
 	data["header"] = "Active configuration:";
-	data["ports"] = SerialPort::GetPortsList();	//{"COM1", "COM2"};
+	data["ports"] = SerialApi::GetPortsList();	//{"COM1", "COM2"};
 	data["port"] = "{{ port }}";
 	data["configs"] = configurations;
 	data["config_selected"] = active_config;

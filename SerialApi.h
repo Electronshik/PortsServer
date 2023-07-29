@@ -13,9 +13,9 @@ namespace SerialApi
 
 	extern std::map<ErrorCode, std::string> ErrorString;
 
-	std::vector<std::string> GetPortsList();
-	ErrorCode OpenPort(std::string &port_name, SerialPortConfig &port_config);
-	ErrorCode ClosePort(std::string &port_name);
-	ErrorCode Send(std::string &port_name, std::string &cmd);
-	std::string Receive(std::string &port_name);
+	auto GetPortsList() -> std::vector<std::string>;
+	auto OpenPort(std::string &port_name, SerialPortConfig &port_config) -> ErrorCode;
+	auto ClosePort(std::string &port_name) -> ErrorCode;
+	auto Send(std::string &port_name, std::string &cmd) -> ErrorCode;
+	auto Receive(std::string &port_name) -> std::string;
 }

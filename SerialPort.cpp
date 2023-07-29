@@ -1,6 +1,6 @@
 #include "SerialPort.h"
 
-std::vector<std::string> SerialPort::GetPortsList()
+auto SerialPort::GetPortsList() -> std::vector<std::string>
 {
 	COMMCONFIG CommConfig;
 	DWORD size;
@@ -79,7 +79,7 @@ SerialPort::~SerialPort()
 	CloseHandle(this->port);
 }
 
-std::string SerialPort::GetName()
+auto SerialPort::GetName() -> std::string
 {
 	return this->name;
 }
@@ -102,7 +102,7 @@ void SerialPort::Write(char* buff, int len)
 	}
 }
 
-int SerialPort::Read(char* buff)
+auto SerialPort::Read(char* buff) -> int
 {
 	DWORD readed_len = 1;
 	int len = 0;

@@ -1,8 +1,22 @@
 #include "SerialApi.h"
 #include "SerialPort.h"
 #include <memory>
+#include <concepts>
 
-namespace SerialApi {
+namespace SerialApi
+{
+	template<class T> concept PortTypeInterface =
+	requires (T t)
+	{
+		{ T::GetPortsList() } -> std::same_as<std::vector<std::string>>;
+		T(std::declval<std::string&>(), std::declval<SerialPortConfig&>());
+		{ t.GetName() } -> std::same_as<std::string>;
+		{ t.Write(std::declval<char*>(), int{}) } -> std::same_as<void>;
+		{ t.Read(std::declval<char*>()) } -> std::same_as<int>;
+	};
+
+	using PortType = SerialPort;
+	static_assert(PortTypeInterface<PortType>);
 
 	std::vector<std::unique_ptr<SerialPort>> OpenedPorts;
 	std::map<ErrorCode, std::string> ErrorString = {
@@ -12,20 +26,20 @@ namespace SerialApi {
 		{ ErrorCode::PortClosed, "PortClosed" },
 	};
 
-	std::vector<std::string> GetPortsList()
+	auto GetPortsList() -> std::vector<std::string>
 	{
-		return SerialPort::GetPortsList();
+		return PortType::GetPortsList();
 	}
 
-	ErrorCode OpenPort(std::string &port_name, SerialPortConfig &port_config)
+	auto OpenPort(std::string &port_name, SerialPortConfig &port_config) -> ErrorCode
 	{
-		OpenedPorts.push_back(std::make_unique<SerialPort>(port_name, port_config));
+		OpenedPorts.push_back(std::make_unique<PortType>(port_name, port_config));
 		return ErrorCode::Ok;
 	}
 
-	ErrorCode ClosePort(std::string &port_name)
+	auto ClosePort(std::string &port_name) -> ErrorCode
 	{
-		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<SerialPort>& ptr){ return ptr->GetName() == port_name; });
+		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
 		if (it != OpenedPorts.end())
 		{
 			OpenedPorts.erase(it);
@@ -34,12 +48,12 @@ namespace SerialApi {
 		return ErrorCode::Ok;
 	}
 
-	ErrorCode Send(std::string &port_name, std::string &cmd)
+	auto Send(std::string &port_name, std::string &cmd) -> ErrorCode
 	{
 		if (OpenedPorts.empty())
 			return ErrorCode::PortClosed;
 
-		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<SerialPort>& ptr){ return ptr->GetName() == port_name; });
+		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
 		if (it == OpenedPorts.end())
 			return ErrorCode::PortClosed;
 
@@ -49,14 +63,14 @@ namespace SerialApi {
 		return ErrorCode::Ok;
 	}
 
-	std::string Receive(std::string &port_name)
+	auto Receive(std::string &port_name) -> std::string
 	{
 		std::string received = "";
 
 		if (OpenedPorts.empty())
 			return "";
 
-		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<SerialPort>& ptr){ return ptr->GetName() == port_name; });
+		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
 		if (it == OpenedPorts.end())
 			return "";
 
@@ -70,5 +84,4 @@ namespace SerialApi {
 
 		return received;
 	}
-
 }

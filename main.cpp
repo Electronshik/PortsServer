@@ -48,7 +48,7 @@ std::array<std::string, 2> PortFlowcontrol =
 	"Yes"
 };
 
-bool ParsePortConfig(const std::string &str, SerialPortConfig *config)
+auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool
 {
 	std::smatch config_match;
 	int param_num = 0;
@@ -97,7 +97,7 @@ bool ParsePortConfig(const std::string &str, SerialPortConfig *config)
 	return param_num == 5;
 }
 
-ErrorCode ParseGetPostParam(const std::string &str, const std::string &name, std::string &result)
+auto ParseGetPostParam(const std::string &str, const std::string &name, std::string &result) -> ErrorCode
 {
 	std::smatch match;
 	std::regex pattern(name + "=([a-zA-Z0-9]+)");
@@ -109,7 +109,7 @@ ErrorCode ParseGetPostParam(const std::string &str, const std::string &name, std
 	return ErrorCode::Error;
 }
 
-int main(void)
+auto main(void) -> int
 {
 	Server server;
 	Model model("Configurations.sqlite");

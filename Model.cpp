@@ -35,7 +35,7 @@ int sql_callback(void *data, int argc, char **argv, char **azColName)
 	return 0;
 }
 
-ConfigList Model::GetConfigurations()
+auto Model::GetConfigurations() -> ConfigList
 {
 	ConfigList config_list;
 
@@ -55,7 +55,7 @@ ConfigList Model::GetConfigurations()
 	return config_list;
 }
 
-SerialPortConfig Model::GetConfiguration(const char *name)
+auto Model::GetConfiguration(const char *name) -> SerialPortConfig
 {
 	SerialPortConfig port_config;
 
@@ -135,7 +135,7 @@ void Model::DeleteConfiguration(const char *name)
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
-std::vector<Command> Model::GetCommands(const char *configuration)
+auto Model::GetCommands(const char *configuration) -> std::vector<Command>
 {
 	std::vector<Command> commands_list;
 

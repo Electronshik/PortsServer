@@ -6,12 +6,12 @@
 class SerialPort
 {
 	public:
-		static std::vector<std::string> GetPortsList();
+		static auto GetPortsList() -> std::vector<std::string>;
 		SerialPort(std::string &name, SerialPortConfig &port_config);
 		~SerialPort();
-		std::string GetName();
+		auto GetName() -> std::string;
 		void Write(char* buff, int len);
-		int Read(char* buff);
+		auto Read(char* buff) -> int;
 
 	private:
 		std::string name;
