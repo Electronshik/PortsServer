@@ -113,10 +113,14 @@
         if (enable)
         {
           recvTimerId = setInterval(() => {
-            fetch('/api/readfromport').then((response) => { return response.text() })
+            fetch('/api/readfromport', {
+              method: 'POST',
+              body: 'port=' + document.getElementById('select_ports').value
+            })
+            .then((response) => { return response.text() })
             .then((text) => {
               document.getElementById('received_data').innerHTML += text;
-              console.log(text);
+              console.log('Readed from port: ' + text);
             })
             .catch((error) => console.log(error));
           }, 1000)
@@ -131,7 +135,7 @@
         el: '#port-buttons',
         data: {
           ports_string : '',
-          numbers: [ 1, 2, 3, 4, 5 ]
+          port_is_opened : false
         },
         computed: {
           ports: function () { return this.ports_string.split(','); }
@@ -145,13 +149,14 @@
           openPort : function () {
             fetch('/api/openport', {
               method: 'POST',
-              body: 'port=' + document.getElementById('select_ports').value + '&' + getConfigPostParams()
+              body: 'port=' + this.$el.querySelector("#select_ports").value + '&' + getConfigPostParams()
             })
             .then((response) => { return response.text() })
             .then((text) => {
               console.log(text);
               if (text == ErrorCodeOk) {
                 enablePortCommunication(true);
+                this.port_is_opened = true;
               }
             })
             .catch((error) => console.log(error));
@@ -159,14 +164,18 @@
           closePort : function () {
             fetch('/api/closeport', {
               method: 'POST',
-              body: 'port=' + document.getElementById('select_ports').value
+              body: 'port=' + this.$el.querySelector("#select_ports").value
             })
             .then((response) => { return response.text() })
             .then((text) => {
               enablePortCommunication(false);
+              this.port_is_opened = false;
             })
             .catch((error) => console.log(error));
           },
+        },
+        beforeMount() {
+          this.scanPorts()
         }
       })
 
@@ -313,7 +322,7 @@
           {
             enablePortCommunication(false);
           }
-          console.log(text);
+          console.log('Sended to port: ' + text);
         })
         .catch((error) => console.log(error));
       }

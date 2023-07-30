@@ -60,6 +60,7 @@ namespace Api
 		if (ParseGetPostParam(req.body, "port", port_name) == ErrorCode::Ok)
 		{
 			std::string cmd = req.get_param_value("cmd");
+			ParseGetPostParam(req.body, "cmd", cmd);
 			std::cout << "Param Port Name: " << port_name << ", Cmd: " << cmd << std::endl;
 			SerialApi::Send(port_name, cmd);
 			answer = ErrorString[ErrorCode::Ok];
@@ -76,8 +77,8 @@ namespace Api
 
 		if (ParseGetPostParam(req.body, "port", port_name) == ErrorCode::Ok)
 		{
-			SerialApi::Receive(port_name);
-			received = ErrorString[ErrorCode::Ok];
+			received = SerialApi::Receive(port_name);
+			// received = ErrorString[ErrorCode::Ok];
 		}
 
 		if (received != "")

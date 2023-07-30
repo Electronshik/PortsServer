@@ -227,7 +227,7 @@ auto main(void) -> int
 	server.Post("/api/openport", Api::OpenPort);
 	server.Post("/api/closeport", Api::ClosePort);
 	server.Post("/api/sendtoport", Api::SendToPort);
-	server.Get("/api/readfromport", Api::ReadFromPort);
+	server.Post("/api/readfromport", Api::ReadFromPort);
 
 	server.Get("/body-header-param", [](const Request& req, Response& res)
 	{

@@ -1,5 +1,6 @@
 #include "SerialApi.h"
 #include "SerialPort.h"
+#include "TestPort.h"
 #include <memory>
 #include <concepts>
 
@@ -10,15 +11,17 @@ namespace SerialApi
 	{
 		{ T::GetPortsList() } -> std::same_as<std::vector<std::string>>;
 		T(std::declval<std::string&>(), std::declval<SerialPortConfig&>());
+		std::is_constructible<T>;
+		std::is_destructible<T>;
 		{ t.GetName() } -> std::same_as<std::string>;
 		{ t.Write(std::declval<char*>(), int{}) } -> std::same_as<void>;
 		{ t.Read(std::declval<char*>()) } -> std::same_as<int>;
 	};
 
-	using PortType = SerialPort;
+	using PortType = TestPort;
 	static_assert(PortTypeInterface<PortType>);
 
-	std::vector<std::unique_ptr<SerialPort>> OpenedPorts;
+	std::vector<std::unique_ptr<PortType>> OpenedPorts;
 	std::map<ErrorCode, std::string> ErrorString = {
 		{ ErrorCode::Ok, "Ok" },
 		{ ErrorCode::Error, "Error" },
