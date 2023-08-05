@@ -9,6 +9,8 @@
 
 #include "SerialPort.h"
 
+import utils;
+
 using namespace httplib;
 
 std::map<ErrorCode, std::string> ErrorString = {
@@ -122,7 +124,7 @@ auto main(void) -> int
 		{
 			std::string cookie = req.get_header_value("Cookie", 0);	//todo: parse first cookie
 			ParseGetPostParam(cookie, "active", active_config);
-			std::cout << "Active config (from cookie): " << active_config << std::endl;
+			print_nl("Active config (from cookie): ()", active_config.c_str());
 		}
 
 		// res.set_header("Set-Cookie", "active=test");

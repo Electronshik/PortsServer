@@ -84,7 +84,8 @@
 		"filesystem": "cpp",
 		"numeric": "cpp",
 		"stack": "cpp",
-		"valarray": "cpp"
+		"valarray": "cpp",
+		"*.ixx": "cpp"
 	},
 	"cmake.configureOnOpen": true
 }
