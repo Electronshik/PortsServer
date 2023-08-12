@@ -12,7 +12,7 @@
     <div class="container py-5">
       <h3 class="h3">Bootstrap v5 Bug Report</h3>
 
-      <div class="row">
+      <div class="row"  id="config-buttons">
         <p>
           <div class="col-sm-2">
             <p>{{header}}</p>
@@ -72,28 +72,30 @@
          </div>
       </div>
 
-        <div class="row py-5" id="port-buttons">
+      <div id="port-wrapper">
+        <div class="row py-5">
           <div class="col-sm-2">
             <p>Available Ports:</p>
           </div>
           <div class="col-sm-3">
-            <select class="form-select" id="select_ports" aria-label="Default select example">
+            <select class="form-select" id="select_ports" :disabled="portIsOpened" aria-label="Default select example">
               <option v-for="port in ports" :value="port">{{ port }}</option>
             </select>
           </div>
           <div class="col-sm-5">
-            <button type="button" class="btn btn-success" id="port_scan" v-on:click="scanPorts">Rescan Ports</button>
-            <button type="button" class="btn btn-primary" id="port_open" v-on:click="openPort">Port Open</button>
-            <button type="button" class="btn btn-primary" id="port_close" v-on:click="closePort" disabled>Port Close</button>
+            <button type="button" class="btn btn-success" id="port_scan" v-on:click="scanPorts" :disabled="portIsOpened">Rescan Ports</button>
+            <button type="button" class="btn btn-primary" id="port_open" v-on:click="openPort" :disabled="portIsOpened">Port Open</button>
+            <button type="button" class="btn btn-primary" id="port_close" v-on:click="closePort" :disabled="portIsClosed">Port Close</button>
           </div>
         </div>
 
         <div class="row py-5">
-            {{ commands }}
+          <config-command v-for="command in commands" v-bind:cmd="command.cmd" v-bind:name="command.name"></config-command>
         </div>
         </div class="row py-2">
           <p id="received_data"></p>
         </div>
+      </div>
 
       </div><!-- container -->
 
@@ -105,11 +107,7 @@
     <script>
 
       let recvTimerId;
-      function enablePortCommunication(enable = false) {
-        document.getElementById('select_ports').disabled = enable;
-        document.getElementById('port_scan').disabled = enable;
-        document.getElementById('port_open').disabled = enable;
-        document.getElementById('port_close').disabled = !enable;
+      function enableReceiveTimer(enable = false) {
         if (enable)
         {
           recvTimerId = setInterval(() => {
@@ -130,23 +128,53 @@
           clearInterval(recvTimerId);
         }
       }
-
-      var app = new Vue({
-        el: '#port-buttons',
-        data: {
-          ports_string : '',
-          port_is_opened : false
-        },
+  
+      Vue.component('config-command', {
+        props: ['cmd', 'name'],
         computed: {
-          ports: function () { return this.ports_string.split(','); }
+          disabled: function() {
+            return !this.$parent.port_is_opened;
+          }
         },
         methods: {
-          scanPorts : function () {
+          sendEvent: function() {
+            this.$parent.sendCommand(this.cmd);
+          }
+        },
+        template: '<div class="row">  \
+                    <div class="col-sm-2">  \
+                      <button type="button" class="btn btn-success"	v-on:click="sendEvent" :disabled="disabled">{{ name }}</button>  \
+                    </div>  \
+                    <div class="col-sm-2"">  \
+                    <p>{{ cmd }}</p></div>  \
+                  </div>'
+      })
+
+      var Ports = new Vue({
+        el: '#port-wrapper',
+        data: {
+          ports_string : '',
+          port_is_opened : false,
+          commands: [
+            //{{ commands_array }}
+          ]
+        },
+        computed: {
+          ports: function () { return this.ports_string.split(','); },
+          portIsOpened: function() {
+            return this.port_is_opened;
+          },
+          portIsClosed: function() {
+            return !this.port_is_opened;
+          }
+        },
+        methods: {
+          scanPorts: function () {
             fetch('/api/getportslist').then((response) => { return response.text() })
             .then((text) => this.ports_string = text)
             .catch((error) => console.log(error));
           },
-          openPort : function () {
+          openPort: function () {
             fetch('/api/openport', {
               method: 'POST',
               body: 'port=' + this.$el.querySelector("#select_ports").value + '&' + getConfigPostParams()
@@ -155,24 +183,40 @@
             .then((text) => {
               console.log(text);
               if (text == ErrorCodeOk) {
-                enablePortCommunication(true);
+                enableReceiveTimer(true);
                 this.port_is_opened = true;
               }
             })
             .catch((error) => console.log(error));
           },
-          closePort : function () {
+          closePort: function () {
             fetch('/api/closeport', {
               method: 'POST',
               body: 'port=' + this.$el.querySelector("#select_ports").value
             })
             .then((response) => { return response.text() })
             .then((text) => {
-              enablePortCommunication(false);
+              enableReceiveTimer(false);
               this.port_is_opened = false;
             })
             .catch((error) => console.log(error));
           },
+          sendCommand: function (command) {
+            console.log(command);
+            fetch('/api/sendtoport', {
+              method: 'POST',
+              body: 'port=' + document.getElementById('select_ports').value + '&cmd=' + command
+            })
+            .then((response) => { return response.text() })
+            .then((text) => {
+              if (text == ErrorCodeError)
+              {
+                enableReceiveTimer(false);
+              }
+              console.log('Sended to port: ' + text);
+            })
+            .catch((error) => console.log(error));
+          }
         },
         beforeMount() {
           this.scanPorts()
@@ -308,24 +352,6 @@
 //~ COMMANDS
 
       });
-
-      function portSendCommand(cmd_id)
-      {
-        console.log(document.getElementById(cmd_id).innerText);
-        fetch('/api/sendtoport', {
-          method: 'POST',
-          body: 'port=' + document.getElementById('select_ports').value + '&cmd=' + document.getElementById(cmd_id).innerText
-        })
-        .then((response) => { return response.text() })
-        .then((text) => {
-          if (text == ErrorCodeError)
-          {
-            enablePortCommunication(false);
-          }
-          console.log('Sended to port: ' + text);
-        })
-        .catch((error) => console.log(error));
-      }
 
     </script>
   </body>

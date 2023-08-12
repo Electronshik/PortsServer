@@ -45,24 +45,22 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	data["port_stopbits"] = port_config.Stopbits;
 	data["port_flowcontrol"] = port_config.Flowcontrol;
 
-	std::string rendered_commands;
-	json cmds;
-	int cmd_iter = 1;
-	for (Command &cmd : commands)
+	data["cmd"] = "{{ cmd }}";
+	data["name"] = "{{ name }}";
+
+	std::string commands_array = "\n";
+	for (auto it = commands.begin(); Command &cmd : commands)
 	{
-		cmds["name"] = cmd.Name;
-		cmds["cmd"] = cmd.Cmd;
-		cmds["id"] = "cmd" + std::to_string(cmd_iter);
-		// std::string cmd_template = "<p>{{ name }} : {{ cmd }}</p>";
-		std::string cmd_template = "<div class=\"row\"><div class=\"col-sm-2\"><button type=\"button\" class=\"btn btn-success\"	\
-			onclick=\"portSendCommand('{{ id }}');\">{{ name }}</button></div>	\
-			<div class=\"col-sm-2\" id=\"{{ id }}\"><p>{{ cmd }}</p></div></div>";
-		rendered_commands.append(InjaEnv.render(cmd_template, cmds));
-		cmd_iter++;
+		json command_json;
+		command_json["cmd"] = cmd.Cmd;
+		command_json["name"] = cmd.Name;
+		commands_array.append(command_json.dump());
+		if(++it != commands.end())
+			commands_array.append(",\n");
 	}
 
-	// data["commands"] = {{ {"name", "name1"}, {"cmd", "cmd1"} }, { {"name", "name2"}, {"cmd", "cmd2"} }};
-	data["commands"] = rendered_commands;
+	// std::cout << "commands array:" << commands_array << std::endl;
+	data["commands_array"] = commands_array;
 
 	return InjaEnv.render_file("index.html", data);
 }
