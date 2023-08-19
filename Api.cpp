@@ -1,20 +1,14 @@
 #include "Api.h"
 #include "SerialApi.h"
 
+import utils;
+
 namespace Api
 {
 	void GetPortsList(const Request& req, Response& res)
 	{
 		std::vector<std::string> ports = SerialApi::GetPortsList();
-		std::string content;
-		for(auto &port : ports)
-		{
-			content.append(port);
-			if(port != ports.back())
-				content.append(",");
-			std::cout << "Port exists: " << port << std::endl;
-		}
-		res.set_content(content, "text/plain");
+		res.set_content(join_with_separator(ports.begin(), ports.end(), ","), "text/plain");
 		// res.set_content("C0M1,COM2", "text/plain");
 	}
 

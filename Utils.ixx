@@ -22,3 +22,12 @@ void print_nl(const std::string_view fmt_str, Args&&... args)
 	outstr.append("\n");
 	std::fputs(outstr.c_str(), stdout);
 }
+
+export template<typename T>
+std::string join_with_separator(T beg_it, T end_it, std::string separator)
+{
+	std::ostringstream outstr;
+	if(beg_it != end_it) outstr << *beg_it++;
+	while(beg_it != end_it) outstr << separator.c_str() << *beg_it++;
+	return outstr.str();
+}

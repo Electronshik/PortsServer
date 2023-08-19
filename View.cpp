@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iostream>
 
+import utils;
+
 using namespace inja;
 
 static Environment InjaEnv {"../../html/"};
@@ -48,19 +50,18 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	data["cmd"] = "{{ cmd }}";
 	data["name"] = "{{ name }}";
 
-	std::string commands_array = "\n";
-	for (auto it = commands.begin(); Command &cmd : commands)
-	{
+	std::vector<std::string> outjson_vec;
+	std::transform(commands.begin(), commands.end(), std::back_inserter(outjson_vec), [](Command& cmd) {
 		json command_json;
 		command_json["cmd"] = cmd.Cmd;
 		command_json["name"] = cmd.Name;
-		commands_array.append(command_json.dump());
-		if(++it != commands.end())
-			commands_array.append(",\n");
-	}
+		return command_json.dump();
+	});
 
-	// std::cout << "commands array:" << commands_array << std::endl;
-	data["commands_array"] = commands_array;
+	std::string outjson_str{"\n"};
+	outjson_str.append(join_with_separator(outjson_vec.begin(), outjson_vec.end(), ",\n"));
+
+	data["commands_array"] = outjson_str;
 
 	return InjaEnv.render_file("index.html", data);
 }
