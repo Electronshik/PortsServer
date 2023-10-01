@@ -13,6 +13,9 @@ import utils;
 
 using namespace httplib;
 
+std::string HtmlGlobalPath{"../../"};
+int ServerPort = 80;
+
 std::map<ErrorCode, std::string> ErrorString = {
 	{ ErrorCode::Ok, "Ok" },
 	{ ErrorCode::Error, "Error" }
@@ -99,20 +102,32 @@ auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool
 	return param_num == 5;
 }
 
-auto ParseGetPostParam(const std::string &str, const std::string &name, std::string &result) -> ErrorCode
+auto ParseGetPostParam(const std::string &str, const std::string &name) -> std::optional<std::string>
 {
 	std::smatch match;
 	std::regex pattern(name + "=([a-zA-Z0-9]+)");
 	if (std::regex_search(str, match, pattern))
 	{
-		result = match[1];
-		return ErrorCode::Ok;
+		std::string result = match[1];
+		return result;
 	}
-	return ErrorCode::Error;
+	return std::nullopt;
 }
 
-auto main(void) -> int
+auto main(int argc, char* argv[]) -> int
 {
+	if (argc > 1)
+	{
+		print_nl("HtmlGlobalPath: {}", argv[1]);
+		HtmlGlobalPath.assign(argv[1]);
+	}
+
+	if (argc > 2)
+	{
+		print_nl("ServerPort: {}", argv[2]);
+		ServerPort = atoi(argv[2]);
+	}
+
 	Server server;
 	Model model("Configurations.sqlite");
 	View view;
@@ -123,7 +138,7 @@ auto main(void) -> int
 		if (req.has_header("Cookie"))
 		{
 			std::string cookie = req.get_header_value("Cookie", 0);	//todo: parse first cookie
-			ParseGetPostParam(cookie, "active", active_config);
+			active_config = ParseGetPostParam(cookie, "active").value();
 			print_nl("Active config (from cookie): ()", active_config.c_str());
 		}
 
@@ -157,7 +172,7 @@ auto main(void) -> int
 
 	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request& req, Response& res)
 	{
-		std::string static_path = "../../" + req.matches[1].str();
+		std::string static_path = HtmlGlobalPath + req.matches[1].str();
 		std::ifstream index(static_path.c_str());
 		std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 		std::cout << "Static path: " << static_path << ", Ext: " << req.matches[2].str() << std::endl;
@@ -177,24 +192,23 @@ auto main(void) -> int
 		SerialPortConfig port_config;
 		std::string active_config = "";
 
-		ParseGetPostParam(req.body, "active_config", active_config);
+		active_config = ParseGetPostParam(req.body, "active_config").value();
 		std::cout << "active_config: " << active_config << std::endl;
 
 		if ((!active_config.empty()) && ParsePortConfig(req.body, &port_config))
 		{
-			std::string new_name = "";
-			if (ParseGetPostParam(req.body, "config_new_name", new_name) == ErrorCode::Ok)
+			if (auto new_name = ParseGetPostParam(req.body, "config_new_name"); new_name)
 			{
-				std::string new_config_process_flag = "";
-				if (ParseGetPostParam(req.body, "new_config_process", new_config_process_flag) == ErrorCode::Ok)
+				auto new_config_process_flag = ParseGetPostParam(req.body, "new_config_process");
+				if (new_config_process_flag)
 				{
-					model.AddConfiguration(new_name.c_str(), port_config);
-					std::cout << "New config added: " << new_name << std::endl;
+					model.AddConfiguration(new_name.value().c_str(), port_config);
+					std::cout << "New config added: " << new_name.value() << std::endl;
 				}
 				else
 				{
-					model.RenameConfiguration(active_config.c_str(), new_name.c_str());
-					std::cout << "New name for config: " << new_name << std::endl;
+					model.RenameConfiguration(active_config.c_str(), new_name.value().c_str());
+					std::cout << "New name for config: " << new_name.value() << std::endl;
 				}
 			}
 			else
@@ -297,5 +311,5 @@ auto main(void) -> int
 	}
 
 	printf("server.listen \r\n");
-	server.listen("localhost", 80);
+	server.listen("localhost", ServerPort);
 }

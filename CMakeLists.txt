@@ -35,6 +35,16 @@ add_executable(CppServer ${SOURCES})
 # 	RUNTIME_OUTPUT_DIRECTORY <debug ${PROJECT_SOURCE_DIR}/build/>
 # 	RUNTIME_OUTPUT_DIRECTORY_RELEASE <release ${PROJECT_SOURCE_DIR}/build/>
 # )
-# if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe")
-# 	configure_file(${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe ${PROJECT_SOURCE_DIR}/build/CppServer.exe COPYONLY)
-# endif()
+# configure_file(${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/CppServer.exe COPYONLY)
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe")
+	file(COPY_FILE ${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/CppServer.exe)
+endif()
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/Configurations.sqlite")
+	file(COPY_FILE ${PROJECT_SOURCE_DIR}/build/Debug/Configurations.sqlite ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/Configurations.sqlite)
+endif()
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/html/")
+	file(COPY ${PROJECT_SOURCE_DIR}/html/ DESTINATION ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/html/)
+endif()

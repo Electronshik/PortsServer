@@ -10,10 +10,12 @@ import utils;
 
 using namespace inja;
 
-static Environment InjaEnv {"../../html/"};
+// static Environment InjaEnv {"../../html/"};
+static std::unique_ptr<Environment> InjaEnv;
 
 View::View()
 {
+	InjaEnv = make_unique<Environment>(HtmlGlobalPath + "html/");
 }
 
 View::~View()
@@ -27,7 +29,6 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 
 	json data;
-	data["header"] = "Active configuration:";
 	data["port"] = "{{ port }}";
 	data["configs"] = configurations;
 	data["config_selected"] = active_config;
@@ -63,5 +64,5 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 
 	data["commands_array"] = outjson_str;
 
-	return InjaEnv.render_file("index.html", data);
+	return InjaEnv->render_file("index.html", data);
 }

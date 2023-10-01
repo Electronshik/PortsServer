@@ -12,3 +12,12 @@ _deps
 
 doc
 build
+
+NwJsApp/versions
+
+# there must be no '.git' folder inside 'actual/' folder
+NwJsApp/actual/*
+!NwJsApp/actual/package.nw
+NwJsApp/actual/package.nw/*
+!NwJsApp/actual/package.nw/package.json
+!NwJsApp/actual/package.nw/index.js

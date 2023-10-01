@@ -4,8 +4,11 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <optional>
 
 using ConfigList = std::vector<std::string>;
+
+extern std::string HtmlGlobalPath;
 
 enum class ErrorCode
 {
@@ -39,4 +42,4 @@ struct Command
 };
 
 auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool;
-auto ParseGetPostParam(const std::string &str, const std::string &name, std::string &result) -> ErrorCode;
+auto ParseGetPostParam(const std::string &str, const std::string &name) -> std::optional<std::string>;

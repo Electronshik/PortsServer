@@ -1,0 +1,10 @@
+{
+	"name": "communicator",
+	"main": "index.js",
+	"window": {
+		"toolbar": true,
+		"width": 1000,
+		"height": 700,
+		"resizable": true
+	}
+}

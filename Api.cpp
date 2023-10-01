@@ -14,16 +14,15 @@ namespace Api
 
 	void OpenPort(const Request& req, Response& res)
 	{
-		std::string port_name = "";
 		std::string answer = ErrorString[ErrorCode::Error];
 
-		if (ParseGetPostParam(req.body, "port", port_name) == ErrorCode::Ok)
+		if (auto port_name = ParseGetPostParam(req.body, "port"); port_name)
 		{
-			std::cout << "Param Port Name: " << port_name << std::endl;
+			std::cout << "Param Port Name: " << port_name.value() << std::endl;
 			SerialPortConfig port_config;
 			if (ParsePortConfig(req.body, &port_config))
 			{
-				SerialApi::OpenPort(port_name, port_config);
+				SerialApi::OpenPort(port_name.value(), port_config);
 				answer = ErrorString[ErrorCode::Ok];
 			}
 		}
@@ -33,13 +32,12 @@ namespace Api
 
 	void ClosePort(const Request& req, Response& res)
 	{
-		std::string port_name = "";
 		std::string answer = ErrorString[ErrorCode::Error];
 
-		if (ParseGetPostParam(req.body, "port", port_name) == ErrorCode::Ok)
+		if (auto port_name = ParseGetPostParam(req.body, "port"); port_name)
 		{
-			std::cout << "Param Port Name: " << port_name << std::endl;
-			SerialApi::ClosePort(port_name);
+			std::cout << "Param Port Name: " << port_name.value() << std::endl;
+			SerialApi::ClosePort(port_name.value());
 			answer = ErrorString[ErrorCode::Ok];
 		}
 		std::cout << "Post closeport: " << req.body << std::endl;
@@ -48,15 +46,14 @@ namespace Api
 
 	void SendToPort(const Request& req, Response& res)
 	{
-		std::string port_name = "";
 		std::string answer = ErrorString[ErrorCode::Error];
 
-		if (ParseGetPostParam(req.body, "port", port_name) == ErrorCode::Ok)
+		if (auto port_name = ParseGetPostParam(req.body, "port"); port_name)
 		{
 			std::string cmd = req.get_param_value("cmd");
-			ParseGetPostParam(req.body, "cmd", cmd);
-			std::cout << "Param Port Name: " << port_name << ", Cmd: " << cmd << std::endl;
-			SerialApi::Send(port_name, cmd);
+			cmd = ParseGetPostParam(req.body, "cmd").value();
+			std::cout << "Param Port Name: " << port_name.value() << ", Cmd: " << cmd << std::endl;
+			SerialApi::Send(port_name.value(), cmd);
 			answer = ErrorString[ErrorCode::Ok];
 		}
 
@@ -66,17 +63,15 @@ namespace Api
 
 	void ReadFromPort(const Request& req, Response& res)
 	{
-		std::string port_name = "";
 		std::string received = "";
 
-		if (ParseGetPostParam(req.body, "port", port_name) == ErrorCode::Ok)
+		if (auto port_name = ParseGetPostParam(req.body, "port"); port_name)
 		{
-			received = SerialApi::Receive(port_name);
+			received = SerialApi::Receive(port_name.value());
 			// received = ErrorString[ErrorCode::Ok];
+			if (received != "")
+				std::cout << "Read from port: " << port_name.value() << ", Val: " << received << std::endl;
 		}
-
-		if (received != "")
-			std::cout << "Read from port: " << port_name << ", Val: " << received << std::endl;
 
 		std::cout << "/api/readfromport:" << received << std::endl;
 		res.set_content(received, "text/plain");
