@@ -11,6 +11,91 @@ version: 1
         body:
           text/html:
 
+/getconfiglist:
+  displayName: GetConfigList
+  description: Returns list of configurations
+  get:
+    responses:
+      '200':
+        body:
+          application/json:
+            example: |
+            {
+              "configurations": [ "config","test" ]
+            }
+
+/getallparams:
+  displayName: GetAllParams
+  description: Returns parameters of selected configuration
+  get:
+    responses:
+      '200':
+        body:
+          application/json:
+            example: |
+            {
+              "databits": "8",
+              "flowcontrol": "None",
+              "parity": "None",
+              "speed": "115200",
+              "stopbits": "1"
+            }
+
+/getconfigparams:
+  displayName: GetConfigParams
+  description: Returns lists of all parameters
+  get:
+    body:
+      text/plain:
+        type: string
+        example: config=config
+    responses:
+      '200':
+        body:
+          application/json:
+            example: |
+            {
+              "databits": ["7","8"],
+              "flowcontrol": ["None","Yes"],
+              "parity": ["None","Odd","Even"],
+              "speed": ["9600","19200","115200"],
+              "stopbits": ["1","2"]
+            }
+
+/deleteconfig:
+  displayName: DeleteConfig
+  description: Delete selected configuration
+  get:
+    body:
+      text/plain:
+        type: string
+        example: config=config
+    responses:
+      '200':
+        body:
+          application/json:
+            example: |
+            {
+              "result": "Ok"
+            }
+
+/saveconfigparams:
+  displayName: SaveConfig
+  description: Save new parameters or name for selected configuration
+  get:
+    body:
+      text/plain:
+        type: string
+        example: config=config
+    responses:
+      '200':
+        body:
+          application/json:
+            example: |
+            {
+              "result": "Ok"
+            }
+
 /api:
   /getportslist:
     displayName: GetPortsList
@@ -19,9 +104,11 @@ version: 1
       responses:
         '200':
           body:
-            text/plain:
-              type: string
-              example: COM85,COM88
+            application/json:
+              example: |
+              {
+                "ports": [ "COM85","COM88" ]
+              }
 
   /openport:
     displayName: OpenPort
@@ -34,13 +121,16 @@ version: 1
       responses:
         '200':
           body:
-            text/plain:
-              type: string
-              example: |
-                [
-                  Ok
-                  Error
-                ]
+            application/json:
+              examples:
+                exOk: |
+                {
+                  "result": "Ok"
+                }
+                exErr: |
+                {
+                  "result": "Error"
+                }
 
   /closeport:
     displayName: ClosePort
@@ -53,13 +143,16 @@ version: 1
       responses:
         '200':
           body:
-            text/plain:
-              type: string
-              example: |
-                [
-                  Ok
-                  Error
-                ]
+            application/json:
+              examples:
+                exOk: |
+                {
+                  "result": "Ok"
+                }
+                exErr: |
+                {
+                  "result": "Error"
+                }
 
   /sendtoport:
     displayName: SendToPort
@@ -72,13 +165,16 @@ version: 1
       responses:
         '200':
           body:
-            text/plain:
-              type: string
-              example: |
-                [
-                  Ok
-                  Error
-                ]
+            application/json:
+              examples:
+                exOk: |
+                {
+                  "result": "Ok"
+                }
+                exErr: |
+                {
+                  "result": "Error"
+                }
 
   /readfromport:
     displayName: ReadFromPort
@@ -90,6 +186,15 @@ version: 1
           example: port=COM88
       responses:
         '200':
-          body:
-            text/plain:
-              type: string
+            application/json:
+              examples:
+                exOk: |
+                {
+                  "received": "0x01",
+                  "result": "Ok"
+                }
+                exErr: |
+                {
+                "received": "",
+                  "result": "Error"
+                }

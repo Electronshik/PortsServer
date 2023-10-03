@@ -3,6 +3,7 @@
 #include "Model.h"
 #include "View.h"
 #include "Api.h"
+#include "json.hpp"
 #include <format>
 #include <regex>
 #include <memory>
@@ -12,6 +13,7 @@
 import Utils;
 
 using namespace httplib;
+using json = nlohmann::json;
 
 std::string HtmlGlobalPath{"../../"};
 int ServerPort = 80;
@@ -114,6 +116,16 @@ auto ParseGetPostParam(const std::string &str, const std::string &name) -> std::
 	return std::nullopt;
 }
 
+void CreateDefaultConfiguration(Model &model)
+{
+	SerialPortConfig PortConfig;
+	model.AddConfiguration("default", PortConfig);
+	PortConfig.Speed = "9600";
+	PortConfig.Stopbits = "2";
+	model.AddCommand("default", "default_cmd", "0x01");
+	model.AddCommand("default", "default_cmd2", "0x02");
+}
+
 auto main(int argc, char* argv[]) -> int
 {
 	if (argc > 1)
@@ -132,7 +144,39 @@ auto main(int argc, char* argv[]) -> int
 	Model model("Configurations.sqlite");
 	View view;
 
-	server.Get("/", [&view, &model](const Request& req, Response& res)
+	auto result = model.GetConfigurations();
+	if (!result.empty())
+	{
+		for (auto& el : result)
+			std::cout << "Found configurations: " << el.c_str() << std::endl;
+	}
+	else
+	{
+		CreateDefaultConfiguration(model);
+	}
+
+	server.set_logger([](const Request &req, const Response &res)
+	{
+		if (req.method == "GET")
+		{
+			std::string params{""};
+			if (!req.params.empty())
+				params = "?" + detail::params_to_query_str(req.params);
+
+			print_nl("Log GET request: {}{}", req.path, params);
+		}
+		else if (req.method == "POST")
+		{
+			print_nl("Log POST request: {}", req.path);
+			print_nl("\tWith body: {}", req.body);
+		}
+		else
+		{
+			print_nl("Log Other request: {}", req.path);
+		}
+	});
+
+	server.Get("/", [&view, &model](const Request &req, Response &res)
 	{
 		std::string active_config = "";
 		if (req.has_header("Cookie"))
@@ -155,7 +199,7 @@ auto main(int argc, char* argv[]) -> int
 				if (config == active_config)
 				{
 					active_conf_found = true;
-					std::cout << "Active config finded: " << active_config << std::endl;
+					std::cout << "Active config found: " << active_config << std::endl;
 				}
 			}
 		}
@@ -171,25 +215,56 @@ auto main(int argc, char* argv[]) -> int
 		res.set_content(view.GetIndex(configurations, active_config, config, commands), "text/html");
 	});
 
-	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request& req, Response& res)
+	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request &req, Response &res)
 	{
 		std::string static_path = HtmlGlobalPath + req.matches[1].str();
 		std::ifstream index(static_path.c_str());
 		std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
-		std::cout << "Static path: " << static_path << ", Ext: " << req.matches[2].str() << std::endl;
 		std::string content_type = req.matches[2].str() == ".css" ? "text/css" : "text/javascript";
 		res.set_content(body, content_type);
 	});
 
-	server.Get("/deleteconfig", [&model](const Request& req, Response& res)
+	server.Get("/getconfiglist", [&model](const Request &req, Response &res)
 	{
-		std::cout << "deleteconfig:" << req.get_param_value("config") << std::endl;
-		model.DeleteConfiguration(req.get_param_value("config").c_str());
-		res.set_content("deleteconfig success", "text/plain");
+		json data;
+		data["configurations"] = model.GetConfigurations();
+		res.set_content(data.dump(), "application/json");
 	});
 
-	server.Post("/saveconfigparams", [&model](const Request& req, Response& res)
+	server.Get("/getallparams", [&model](const Request &req, Response &res)
 	{
+		json data;
+		data["speed"] = PortSpeed;
+		data["databits"] = PortDatabits;
+		data["parity"] = PortParity;
+		data["stopbits"] = PortStopbits;
+		data["flowcontrol"] = PortFlowcontrol;
+		res.set_content(data.dump(), "application/json");
+	});
+
+	server.Get("/getconfigparams", [&model](const Request &req, Response &res)
+	{
+		auto config = model.GetConfiguration(req.get_param_value("config").c_str());
+		json data;
+		data["speed"] = config.Speed;
+		data["databits"] = config.Databits;
+		data["parity"] = config.Parity;
+		data["stopbits"] = config.Stopbits;
+		data["flowcontrol"] = config.Flowcontrol;
+		res.set_content(data.dump(), "application/json");
+	});
+
+	server.Get("/deleteconfig", [&model](const Request &req, Response &res)
+	{
+		model.DeleteConfiguration(req.get_param_value("config").c_str());
+		json data;
+		data["result"] = ErrorString[ErrorCode::Ok];
+		res.set_content(data.dump(), "application/json");
+	});
+
+	server.Post("/saveconfigparams", [&model](const Request &req, Response &res)
+	{
+		auto result = ErrorCode::Ok;
 		SerialPortConfig port_config;
 		std::string active_config = "";
 
@@ -216,29 +291,17 @@ auto main(int argc, char* argv[]) -> int
 			{
 				model.UpdateConfiguration(active_config.c_str(), port_config);
 			}
-			res.set_content("saveconfigparams successfully updated!", "text/plain");
+			result = ErrorCode::Ok;
 		}
 		else
 		{
-			res.set_content("saveconfigparams update error!", "text/plain");
+			result = ErrorCode::Error;
 		}
-	});
 
-	// server.Get("/getconfiguration", [&model](const Request& req, Response& res)
-	// {
-	// 	std::cout << req.get_param_value("config") << std::endl;
-	// 	auto config = model.GetConfiguration(req.get_param_value("config").c_str());
-	// 	std::cout << config.Speed << std::endl;
-	// 	std::string response = std::format("{{	\
-	// 		\"Speed\":\"{}\",	\
-	// 		\"Databits\":\"{}\",	\
-	// 		\"Parity\":\"{}\",	\
-	// 		\"Stopbits\":\"{}\",	\
-	// 		\"Flowcontrol\":\"{}\"	\
-	// 		}}", config.Speed, config.Databits, config.Parity, config.Stopbits, config.Flowcontrol);
-	// 	std::cout << response << std::endl;
-	// 	res.set_content(response.c_str(), "text/javascript");
-	// });
+		json data;
+		data["result"] = ErrorString[result];
+		res.set_content(data.dump(), "application/json");
+	});
 
 	server.Get("/api/getportslist", Api::GetPortsList);
 	server.Post("/api/openport", Api::OpenPort);
@@ -247,21 +310,16 @@ auto main(int argc, char* argv[]) -> int
 	server.Post("/api/readfromport", Api::ReadFromPort);
 	server.Get("/api/gettestdata", Api::GetTestData);
 
-	server.Get("/body-header-param", [](const Request& req, Response& res)
-	{
-		if (req.has_header("Content-Length")) {
-			auto val = req.get_header_value("Content-Length");
-		}
-		if (req.has_param("key")) {
-			auto val = req.get_param_value("key");
-		}
-		res.set_content(req.body, "text/plain");
-	});
-
-	server.Get("/stop", [&](const Request& req, Response& res)
-	{
-		server.stop();
-	});
+	// server.Get("/body-header-param", [](const Request &req, Response &res)
+	// {
+	// 	if (req.has_header("Content-Length")) {
+	// 		auto val = req.get_header_value("Content-Length");
+	// 	}
+	// 	if (req.has_param("key")) {
+	// 		auto val = req.get_param_value("key");
+	// 	}
+	// 	res.set_content(req.body, "text/plain");
+	// });
 
 	// SerialPortConfig PortConfig;
 	// model.AddConfiguration("config", PortConfig);
@@ -274,11 +332,6 @@ auto main(int argc, char* argv[]) -> int
 	// model.AddCommand("config", "config cmd", "0x11ff");
 	// model.AddCommand("config", "config new cmd", "0x22ff");
 	// model.DeleteCommand("test", "cmd2test");
-	auto result = model.GetConfigurations();
-	for(auto& el : result)
-	{
-		std::cout << "Finded configurations: " << el.c_str() << std::endl;
-	}
 
 /*
 	SerialPortConfig port_config;
@@ -312,6 +365,6 @@ auto main(int argc, char* argv[]) -> int
 		std::cout << "Port exists: " << port << std::endl;
 	}
 
-	printf("server.listen \r\n");
+	print_nl("Server listen at port: {}", ServerPort);
 	server.listen("localhost", ServerPort);
 }

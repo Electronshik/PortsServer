@@ -107,7 +107,7 @@ void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig)
 		VALUES('{0}','{1}','{2}','{3}','{4}','{5}','{6}')",
 		name, PortConfig.Speed, PortConfig.Databits, PortConfig.Parity,
 		PortConfig.Stopbits, PortConfig.Flowcontrol, PortConfig.Format);
-	std::cout << query << std::endl;
+
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 
 	query = std::format("CREATE TABLE {}(id INTEGER PRIMARY KEY AUTOINCREMENT,	\
@@ -122,7 +122,7 @@ void Model::UpdateConfiguration(const char *name, SerialPortConfig &PortConfig)
 		stopbits='{3}', flowcontrol='{4}', format='{5}' WHERE name='{6}'",
 		PortConfig.Speed, PortConfig.Databits, PortConfig.Parity,
 		PortConfig.Stopbits, PortConfig.Flowcontrol, PortConfig.Format, name);
-	std::cout << query << std::endl;
+
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 

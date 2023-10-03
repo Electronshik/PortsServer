@@ -112,10 +112,12 @@
               method: 'POST',
               body: 'port=' + document.getElementById('select_ports').value
             })
-            .then((response) => { return response.text() })
-            .then((text) => {
-              document.getElementById('received_data').innerHTML += text;
-              console.log('Readed from port: ' + text);
+            .then((response) => { return response.json() })
+            .then((data) => {
+              if (data.result == ErrorCodeOk) {
+                document.getElementById('received_data').innerHTML += data.received;
+                console.log('Readed from port: ' + data.received);
+              }
             })
             .catch((error) => console.log(error));
           }, 1000)
@@ -150,14 +152,13 @@
       var Ports = new Vue({
         el: '#port-wrapper',
         data: {
-          ports_string : '',
           port_is_opened : false,
           commands: [
             //{{ commands_array }}
-          ]
+          ],
+          ports : ''
         },
         computed: {
-          ports: function () { return this.ports_string.split(','); },
           portIsOpened: function() {
             return this.port_is_opened;
           },
@@ -167,8 +168,8 @@
         },
         methods: {
           scanPorts: function () {
-            fetch('/api/getportslist').then((response) => { return response.text() })
-            .then((text) => this.ports_string = text)
+            fetch('/api/getportslist').then((response) => { return response.json() })
+            .then((data) => this.ports = data.ports)
             .catch((error) => console.log(error));
           },
           openPort: function () {
@@ -176,10 +177,10 @@
               method: 'POST',
               body: 'port=' + this.$el.querySelector("#select_ports").value + '&' + getConfigPostParams()
             })
-            .then((response) => { return response.text() })
-            .then((text) => {
-              console.log(text);
-              if (text == ErrorCodeOk) {
+            .then((response) => { return response.json() })
+            .then((data) => {
+              console.log(data);
+              if (data.result == ErrorCodeOk) {
                 enableReceiveTimer(true);
                 this.port_is_opened = true;
               }
@@ -191,26 +192,25 @@
               method: 'POST',
               body: 'port=' + this.$el.querySelector("#select_ports").value
             })
-            .then((response) => { return response.text() })
-            .then((text) => {
+            .then((response) => { return response.json() })
+            .then((data) => {
               enableReceiveTimer(false);
               this.port_is_opened = false;
             })
             .catch((error) => console.log(error));
           },
           sendCommand: function (command) {
-            console.log(command);
             fetch('/api/sendtoport', {
               method: 'POST',
               body: 'port=' + document.getElementById('select_ports').value + '&cmd=' + command
             })
-            .then((response) => { return response.text() })
-            .then((text) => {
-              if (text == ErrorCodeError)
+            .then((response) => { return response.json() })
+            .then((data) => {
+              if (data.result == ErrorCodeError)
               {
                 enableReceiveTimer(false);
               }
-              console.log('Sended to port: ' + text);
+              console.log('Sended to port: ' + command);
             })
             .catch((error) => console.log(error));
           }
@@ -292,9 +292,10 @@
           event.preventDefault();
           if (confirm('Are you sure you want to remove this configuration?')) {
             console.log('Thing was saved to the database.');
-            fetch('/deleteconfig?config=' + document.getElementById('select_config').value).then((response) => { return response.text() })
-            .then((text) => {
-              console.log(text);
+            fetch('/deleteconfig?config=' + document.getElementById('select_config').value)
+            .then((response) => { return response.json() })
+            .then((data) => {
+              console.log(data);
               location.reload();
             })
             .catch((error) => console.log(error));
@@ -324,9 +325,9 @@
             method: 'POST',
             body: body
           })
-          .then((response) => { return response.text() })
-          .then((text) => {
-            console.log(text);
+          .then((response) => { return response.data() })
+          .then((data) => {
+            console.log(data);
             if(active_config_name != new_name)
             {
               setCookie('active', new_name, 1);

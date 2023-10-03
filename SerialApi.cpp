@@ -51,7 +51,6 @@ namespace SerialApi
 		if (it != OpenedPorts.end())
 		{
 			OpenedPorts.erase(it);
-			std::cout << "Port removed: " << port_name << std::endl;
 		}
 		return ErrorCode::Ok;
 	}
@@ -69,7 +68,6 @@ namespace SerialApi
 
 		(*it)->Write((char*)cmd.c_str(), cmd.length());
 		// (OpenedPorts.at(0).get())->Write((char*)cmd.c_str(), cmd.length());
-		std::cout << "Send to port: " << cmd << std::endl;
 		return ErrorCode::Ok;
 	}
 
