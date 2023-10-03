@@ -307,34 +307,48 @@
         });
 
         document.getElementById('save_config_params').addEventListener('click', () => {
-          let active_config_name = document.getElementById('select_config').value;
-          let body = 'active_config=' + active_config_name + '&';
-          let new_name = document.getElementById('config_new_name').value;
-          if(active_config_name != new_name)
+          let body = getConfigPostParams();
+          if(new_config_process)
           {
-            body += 'config_new_name=' + document.getElementById('config_new_name').value + '&';
+            let new_name = document.getElementById('config_new_name').value;
+            body += '&config_name=' + new_name;
+            fetch('/addnewconfig', {
+              method: 'POST',
+              body: body
+            })
+            .then((response) => { return response.json() })
+            .then((data) => {
+              if(data.result == ErrorCodeOk)
+              {
+                setCookie('active', new_name, 1);
+                location.reload();
+              }
+            })
+            .catch((error) => console.log(error));
           }
-          if(new_config_process == true)
+          else
           {
-            body += 'new_config_process=true&';
-          }
-          console.log(body);
-          body += getConfigPostParams();
-
-          fetch('/saveconfigparams', {
-            method: 'POST',
-            body: body
-          })
-          .then((response) => { return response.data() })
-          .then((data) => {
-            console.log(data);
-            if(active_config_name != new_name)
+            let config_name = document.getElementById('select_config').value;
+            body += '&config_name=' + config_name;
+            let new_name = document.getElementById('config_new_name').value;
+            if(config_name != new_name)
             {
-              setCookie('active', new_name, 1);
-              location.reload();
+              body += '&config_new_name=' + new_name;
             }
-          })
-          .catch((error) => console.log(error));
+            fetch('/saveconfigparams', {
+              method: 'POST',
+              body: body
+            })
+            .then((response) => { return response.json() })
+            .then((data) => {
+              if(config_name != new_name)
+              {
+                setCookie('active', new_name, 1);
+                location.reload();
+              }
+            })
+            .catch((error) => console.log(error));
+          }
 
           setParamsActive(false);
         });

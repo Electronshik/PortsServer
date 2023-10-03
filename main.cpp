@@ -254,6 +254,23 @@ auto main(int argc, char* argv[]) -> int
 		res.set_content(data.dump(), "application/json");
 	});
 
+	server.Post("/addnewconfig", [&model](const Request &req, Response &res)
+	{
+		auto result = ErrorCode::Error;
+		if (auto config_name = ParseGetPostParam(req.body, "config_name"); config_name)
+		{
+			SerialPortConfig port_config;
+			if (ParsePortConfig(req.body, &port_config))
+			{
+				model.AddConfiguration(config_name.value().c_str(), port_config);
+				result = ErrorCode::Ok;
+			}
+		}
+		json data;
+		data["result"] = ErrorString[result];
+		res.set_content(data.dump(), "application/json");
+	});
+
 	server.Get("/deleteconfig", [&model](const Request &req, Response &res)
 	{
 		model.DeleteConfiguration(req.get_param_value("config").c_str());
@@ -264,40 +281,21 @@ auto main(int argc, char* argv[]) -> int
 
 	server.Post("/saveconfigparams", [&model](const Request &req, Response &res)
 	{
-		auto result = ErrorCode::Ok;
-		SerialPortConfig port_config;
-		std::string active_config = "";
-
-		active_config = ParseGetPostParam(req.body, "active_config").value();
-		std::cout << "active_config: " << active_config << std::endl;
-
-		if ((!active_config.empty()) && ParsePortConfig(req.body, &port_config))
+		auto result = ErrorCode::Error;
+		if (auto config_name = ParseGetPostParam(req.body, "config_name"); config_name)
 		{
-			if (auto new_name = ParseGetPostParam(req.body, "config_new_name"); new_name)
+			if (auto config_new_name = ParseGetPostParam(req.body, "config_new_name"); config_new_name)
 			{
-				auto new_config_process_flag = ParseGetPostParam(req.body, "new_config_process");
-				if (new_config_process_flag)
-				{
-					model.AddConfiguration(new_name.value().c_str(), port_config);
-					std::cout << "New config added: " << new_name.value() << std::endl;
-				}
-				else
-				{
-					model.RenameConfiguration(active_config.c_str(), new_name.value().c_str());
-					std::cout << "New name for config: " << new_name.value() << std::endl;
-				}
+				model.RenameConfiguration(config_name.value().c_str(), config_new_name.value().c_str());
 			}
-			else
+
+			SerialPortConfig port_config;
+			if (ParsePortConfig(req.body, &port_config))
 			{
-				model.UpdateConfiguration(active_config.c_str(), port_config);
+				model.UpdateConfiguration(config_name.value().c_str(), port_config);
 			}
 			result = ErrorCode::Ok;
 		}
-		else
-		{
-			result = ErrorCode::Error;
-		}
-
 		json data;
 		data["result"] = ErrorString[result];
 		res.set_content(data.dump(), "application/json");
