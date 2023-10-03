@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-import utils;
+import Utils;
 
 using namespace inja;
 
@@ -60,7 +60,7 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	});
 
 	std::string outjson_str{"\n"};
-	outjson_str.append(join_with_separator(outjson_vec.begin(), outjson_vec.end(), ",\n"));
+	outjson_str.append(join_with_sep(outjson_vec.begin(), outjson_vec.end(), ",\n"));
 
 	data["commands_array"] = outjson_str;
 

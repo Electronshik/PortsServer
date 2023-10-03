@@ -5,7 +5,7 @@
 #include <concepts>
 #include <format>
 
-import utils;
+import Utils;
 
 namespace SerialApi
 {
@@ -99,15 +99,15 @@ namespace SerialApi
 	{
 		std::vector<std::string> ports = PortType::GetPortsList();
 		std::string test_data = std::format("{{	\
-			\"ports\":\"[{}]\",	\
+			\"ports\":[{}],	\
 				\"errors\":{{	\
 					\"Ok\":\"{}\",	\
-					\"Ok\":\"{}\",	\
-					\"Ok\":\"{}\",	\
-					\"Ok\":\"{}\",	\
+					\"Error\":\"{}\",	\
+					\"PortNotExists\":\"{}\",	\
+					\"PortClosed\":\"{}\"	\
 				}}	\
 			}}",
-				join_with_separator(ports.begin(), ports.end(), ","),
+				join_wrap_with_sep(ports.begin(), ports.end(), ",", "\""),
 				ErrorString[ErrorCode::Ok],
 				ErrorString[ErrorCode::Error],
 				ErrorString[ErrorCode::PortNotExists],

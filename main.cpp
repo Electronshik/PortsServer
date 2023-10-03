@@ -9,7 +9,7 @@
 
 #include "SerialPort.h"
 
-import utils;
+import Utils;
 
 using namespace httplib;
 
@@ -268,7 +268,7 @@ auto main(int argc, char* argv[]) -> int
 	// PortConfig.Speed = "9600";
 	// PortConfig.Stopbits = "2";
 	// model.AddConfiguration("test", PortConfig);
-	// model.DeleteConfiguration("config");
+	// // model.DeleteConfiguration("config");
 	// model.AddCommand("test", "cmdtest", "0xffff");
 	// model.AddCommand("test", "cmd2test", "0xffff");
 	// model.AddCommand("config", "config cmd", "0x11ff");

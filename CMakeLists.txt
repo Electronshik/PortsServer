@@ -15,14 +15,16 @@ set(CMAKE_CXX_STANDARD 20)
 # add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++2a)
 
 file(GLOB SOURCES
-	"${PROJECT_SOURCE_DIR}/*.ixx",
-	"${PROJECT_SOURCE_DIR}/*.cpp",
+	"${PROJECT_SOURCE_DIR}/*.ixx"
+	"${PROJECT_SOURCE_DIR}/*.cpp"
 	"${PROJECT_SOURCE_DIR}/libs/*.c"
+	"${PROJECT_SOURCE_DIR}/Modules/*.ixx"
 )
 
 include_directories(
-	${CMAKE_SOURCE_DIR},
-	${CMAKE_SOURCE_DIR}/libs
+	${PROJECT_SOURCE_DIR}
+	${PROJECT_SOURCE_DIR}/libs
+	${PROJECT_SOURCE_DIR}/Modules
 )
 
 add_executable(CppServer ${SOURCES})
