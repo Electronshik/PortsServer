@@ -11,4 +11,5 @@ namespace Api
 	void ClosePort(const Request& req, Response& res);
 	void SendToPort(const Request& req, Response& res);
 	void ReadFromPort(const Request& req, Response& res);
+	void GetTestData(const Request& req, Response& res);
 }

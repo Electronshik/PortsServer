@@ -138,7 +138,8 @@ auto main(int argc, char* argv[]) -> int
 		if (req.has_header("Cookie"))
 		{
 			std::string cookie = req.get_header_value("Cookie", 0);	//todo: parse first cookie
-			active_config = ParseGetPostParam(cookie, "active").value();
+			if (auto cookie_config = ParseGetPostParam(cookie, "active"); cookie_config)
+				active_config = cookie_config.value();
 			print_nl("Active config (from cookie): ()", active_config.c_str());
 		}
 
@@ -244,6 +245,7 @@ auto main(int argc, char* argv[]) -> int
 	server.Post("/api/closeport", Api::ClosePort);
 	server.Post("/api/sendtoport", Api::SendToPort);
 	server.Post("/api/readfromport", Api::ReadFromPort);
+	server.Get("/api/gettestdata", Api::GetTestData);
 
 	server.Get("/body-header-param", [](const Request& req, Response& res)
 	{

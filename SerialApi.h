@@ -18,4 +18,5 @@ namespace SerialApi
 	auto ClosePort(std::string &port_name) -> ErrorCode;
 	auto Send(std::string &port_name, std::string &cmd) -> ErrorCode;
 	auto Receive(std::string &port_name) -> std::string;
+	auto GetTestData() -> std::string;
 }

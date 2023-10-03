@@ -25,16 +25,14 @@ auto TestPort::GetName() -> std::string
 
 void TestPort::Write(char* buff, int len)
 {
-	this->received.assign(buff);
+	this->received.append(buff);
 }
 
 auto TestPort::Read(char* buff) -> int
 {
-	// char test_buff[32] = "Test String";
 	int len = this->received.length();
-
 	strcpy(buff, this->received.c_str());
 	this->received.clear();
-		
+
 	return len;	
 }

@@ -3,6 +3,9 @@
 #include "TestPort.h"
 #include <memory>
 #include <concepts>
+#include <format>
+
+import utils;
 
 namespace SerialApi
 {
@@ -42,7 +45,9 @@ namespace SerialApi
 
 	auto ClosePort(std::string &port_name) -> ErrorCode
 	{
-		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
+		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(),
+			[&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
+
 		if (it != OpenedPorts.end())
 		{
 			OpenedPorts.erase(it);
@@ -56,7 +61,9 @@ namespace SerialApi
 		if (OpenedPorts.empty())
 			return ErrorCode::PortClosed;
 
-		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(), [&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
+		auto it = std::find_if(OpenedPorts.begin(), OpenedPorts.end(),
+			[&](std::unique_ptr<PortType>& ptr){ return ptr->GetName() == port_name; });
+
 		if (it == OpenedPorts.end())
 			return ErrorCode::PortClosed;
 
@@ -86,5 +93,26 @@ namespace SerialApi
 		// 	std::cout << "Read from port: " << (OpenedPorts.at(0).get())->GetName() << ", Val: " << received << std::endl;
 
 		return received;
+	}
+
+	auto GetTestData() -> std::string
+	{
+		std::vector<std::string> ports = PortType::GetPortsList();
+		std::string test_data = std::format("{{	\
+			\"ports\":\"[{}]\",	\
+				\"errors\":{{	\
+					\"Ok\":\"{}\",	\
+					\"Ok\":\"{}\",	\
+					\"Ok\":\"{}\",	\
+					\"Ok\":\"{}\",	\
+				}}	\
+			}}",
+				join_with_separator(ports.begin(), ports.end(), ","),
+				ErrorString[ErrorCode::Ok],
+				ErrorString[ErrorCode::Error],
+				ErrorString[ErrorCode::PortNotExists],
+				ErrorString[ErrorCode::PortClosed]
+		);
+		return test_data;
 	}
 }

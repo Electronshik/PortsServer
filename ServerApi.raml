@@ -1,0 +1,95 @@
+title: Communicator
+baseUri: 'http://localhost:80'
+version: 1
+
+/:
+  displayName: Index
+  description: Server index page
+  get:
+    responses:
+      '200':
+        body:
+          text/html:
+
+/api:
+  /getportslist:
+    displayName: GetPortsList
+    description: Returns list of available COM ports
+    get:
+      responses:
+        '200':
+          body:
+            text/plain:
+              type: string
+              example: COM85,COM88
+
+  /openport:
+    displayName: OpenPort
+    description: Open selected COM port
+    post:
+      body:
+        text/plain:
+          type: string
+          example: port=COM88&config_speed=9600&config_databits=8&config_parity=None&config_stopbits=2&config_flowcontrol=None
+      responses:
+        '200':
+          body:
+            text/plain:
+              type: string
+              example: |
+                [
+                  Ok
+                  Error
+                ]
+
+  /closeport:
+    displayName: ClosePort
+    description: Close selected COM port
+    post:
+      body:
+        text/plain:
+          type: string
+          example: port=COM88
+      responses:
+        '200':
+          body:
+            text/plain:
+              type: string
+              example: |
+                [
+                  Ok
+                  Error
+                ]
+
+  /sendtoport:
+    displayName: SendToPort
+    description: Send data to selected COM port
+    post:
+      body:
+        text/plain:
+          type: string
+          example: port=COM88&cmd=0x00ff
+      responses:
+        '200':
+          body:
+            text/plain:
+              type: string
+              example: |
+                [
+                  Ok
+                  Error
+                ]
+
+  /readfromport:
+    displayName: ReadFromPort
+    description: Read data from selected COM port
+    post:
+      body:
+        text/plain:
+          type: string
+          example: port=COM88
+      responses:
+        '200':
+          body:
+            text/plain:
+              type: string

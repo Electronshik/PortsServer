@@ -1,5 +1,6 @@
 module;
 
+#include <sstream>
 #include <format>
 #include <string_view>
 #include <cstdio>
