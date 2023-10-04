@@ -60,35 +60,35 @@ auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool
 	std::smatch config_match;
 	int param_num = 0;
 
-	std::regex pattern("config_speed=([a-zA-Z0-9]+)");
+	std::regex pattern("speed=([a-zA-Z0-9]+)");
 	if (std::regex_search(str, config_match, pattern))
 	{
 		param_num++;
 		config->Speed = config_match[1];
 	}
 
-	pattern = "config_databits=([a-zA-Z0-9]+)";
+	pattern = "databits=([a-zA-Z0-9]+)";
 	if (std::regex_search(str, config_match, pattern))
 	{
 		param_num++;
 		config->Databits = config_match[1];
 	}
 
-	pattern = "config_parity=([a-zA-Z0-9]+)";
+	pattern = "parity=([a-zA-Z0-9]+)";
 	if (std::regex_search(str, config_match, pattern))
 	{
 		param_num++;
 		config->Parity = config_match[1];
 	}
 
-	pattern = "config_stopbits=([a-zA-Z0-9]+)";
+	pattern = "stopbits=([a-zA-Z0-9]+)";
 	if (std::regex_search(str, config_match, pattern))
 	{
 		param_num++;
 		config->Stopbits = config_match[1];
 	}
 
-	pattern = "config_flowcontrol=([a-zA-Z0-9]+)";
+	pattern = "flowcontrol=([a-zA-Z0-9]+)";
 	if (std::regex_search(str, config_match, pattern))
 	{
 		param_num++;
@@ -287,15 +287,15 @@ auto main(int argc, char* argv[]) -> int
 		auto result = ErrorCode::Error;
 		if (auto config_name = ParseGetPostParam(req.body, "config_name"); config_name)
 		{
-			if (auto config_new_name = ParseGetPostParam(req.body, "config_new_name"); config_new_name)
-			{
-				model.RenameConfiguration(config_name.value().c_str(), config_new_name.value().c_str());
-			}
-
 			SerialPortConfig port_config;
 			if (ParsePortConfig(req.body, &port_config))
 			{
 				model.UpdateConfiguration(config_name.value().c_str(), port_config);
+			}
+
+			if (auto config_new_name = ParseGetPostParam(req.body, "config_new_name"); config_new_name)
+			{
+				model.RenameConfiguration(config_name.value().c_str(), config_new_name.value().c_str());
 			}
 			result = ErrorCode::Ok;
 		}

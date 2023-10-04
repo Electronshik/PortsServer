@@ -14,8 +14,8 @@ namespace SerialApi
 	{
 		{ T::GetPortsList() } -> std::same_as<std::vector<std::string>>;
 		T(std::declval<std::string&>(), std::declval<SerialPortConfig&>());
-		std::is_constructible<T>;
-		std::is_destructible<T>;
+		// std::is_constructible<T>; // cease to work in mvsc
+		// std::is_destructible<T>; // cease to work in mvsc
 		{ t.GetName() } -> std::same_as<std::string>;
 		{ t.Write(std::declval<char*>(), int{}) } -> std::same_as<void>;
 		{ t.Read(std::declval<char*>()) } -> std::same_as<int>;

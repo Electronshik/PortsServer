@@ -31,40 +31,7 @@
 
       <div class="row py-2" id="config_new_name_wrapper"></div>
 
-      <div class="row py-2">
-        <div class="col-sm-2"><label for="config_speed">Speed</label></div>
-        <div class="col-sm-1"><label for="config_databits">Data Bits</label></div>
-        <div class="col-sm-1"><label for="config_parity">Parity</label></div>
-        <div class="col-sm-1"><label for="config_stopbits">Stop Bits</label></div>
-        <div class="col-sm-1"><label for="config_flowcontrol">Flow Ctrl</label></div>
-      </div>
-
       <div class="row">
-        <div class="col-sm-2">
-          <select class="form-select" id="config_speed" disabled>
-            {% for speed in all_port_speed %}<option value="{{ speed }}" {% if speed == port_speed %} selected {% endif %} >{{ speed }}</option>{% endfor %}
-          </select>
-        </div>
-        <div class="col-sm-1">
-          <select class="form-select" id="config_databits" disabled>
-            {% for databits in all_port_databits %}<option value="{{ databits }}" {% if databits == port_databits %} selected {% endif %} >{{ databits }}</option>{% endfor %}
-          </select>
-        </div>
-        <div class="col-sm-1">
-          <select class="form-select" id="config_parity" disabled>
-            {% for parity in all_port_parity %}<option value="{{ parity }}" {% if parity == port_parity %} selected {% endif %} >{{ parity }}</option>{% endfor %}
-          </select>
-        </div>
-        <div class="col-sm-1">
-          <select class="form-select" id="config_stopbits" disabled>
-            {% for stopbits in all_port_stopbits %}<option value="{{ stopbits }}" {% if stopbits == port_stopbits %} selected {% endif %} >{{ stopbits }}</option>{% endfor %}
-          </select>
-        </div>
-        <div class="col-sm-1">
-          <select class="form-select" id="config_flowcontrol" disabled>
-            {% for flowcontrol in all_port_flowcontrol %}<option value="{{ flowcontrol }}" {% if flowcontrol == port_flowcontrol %} selected {% endif %} >{{ flowcontrol }}</option>{% endfor %}
-          </select>
-        </div>
         <div class="col-sm-3">
           <button type="button" class="btn btn-success" id="edit_config_params">Edit Config</button>
           <button type="button" class="btn btn-success" id="save_config_params" disabled>Save</button>
@@ -72,14 +39,12 @@
         </div>
       </div>
 
-      <div id="config-wrapper">
+      <div id="config-vue-container">
         <div class="row">
-          <config-parameter v-for="port_param in port_params" v-bind:name="'param-' + port_param.name" v-bind:label="port_param.label" v-bind:values="port_param.values">
+          <config-parameter v-for="port_param in port_params" v-bind:name="port_param.name" v-bind:id="'param-' + port_param.name" v-bind:label="port_param.label" v-bind:values="port_param.values">
           </config-parameter>
         </div>
-      </div>
 
-      <div id="port-wrapper">
         <div class="row py-5">
           <div class="col-sm-2">
             <p>Available Ports:</p>
@@ -135,6 +100,37 @@
         }
       }
 
+      Vue.component('config-parameter', {
+        props: ['name', 'label', 'values','id'],
+        computed: {
+          disabled: function() {
+            return !this.$parent.port_params_enabled;
+          },
+          selected: function() {
+            selectedVal = '';
+            this.$parent.selected_params.forEach((sel_param) => {
+              if(sel_param.name == this.name)
+              {
+                selectedVal = sel_param.value;
+                console.log('Selected: ' + sel_param.name + ' = ' + sel_param.value);
+              }
+            });
+            return selectedVal
+          }
+        },
+        methods:{
+          onChange:function(event){
+            this.$parent.onSelectedChange(this.name, event.target.value);
+          }
+        },
+        template: '<div class="col-sm-2"> \
+                    <label :for="id">{{ label }}</label> \
+                    <select class="form-select" :id="id" :disabled="disabled" v-on:change="onChange($event)"> \
+                      <option v-for="value in values" :value="value" :selected="value == selected">{{ value }}</option> \
+                    </select> \
+                  </div>'
+      })
+
       Vue.component('config-command', {
         props: ['cmd', 'name'],
         computed: {
@@ -156,33 +152,8 @@
                   </div>'
       })
 
-      Vue.component('config-parameter', {
-        props: ['name', 'label', 'values'],
-        computed: {
-          disabled: function() {
-            return !this.$parent.port_params_enabled;
-          },
-          selected: function() {
-            selectedVal = '';
-            this.$parent.selected_params.forEach((sel_param) => {
-              if(('param-' + sel_param.name) == this.name)
-              {
-                selectedVal = sel_param.value;
-              }
-            });
-            return selectedVal
-          }
-        },
-        template: '<div class="col-sm-2"> \
-                    <label :for="name">{{ label }}</label> \
-                    <select class="form-select" :id="name" :disabled="disabled"> \
-                      <option v-for="value in values" :value="value" :selected="value == selected">{{ value }}</option> \
-                    </select> \
-                  </div>'
-      })
-
-      var Configs = new Vue({
-        el: '#config-wrapper',
+      var Ports = new Vue({
+        el: '#config-vue-container',
         data: {
           port_params_enabled: true,
           port_params: [
@@ -197,22 +168,7 @@
               "name": "speed",
               "value": "19200"
             }
-          ]
-        },
-        beforeMount() {
-          fetch('/getallparams').then((response) => { return response.json() })
-          .then((data) => this.port_params = data)
-          .catch((error) => console.log(error));
-          fetch('/getconfigparams?config=' + document.getElementById('select_config').value)
-          .then((response) => { return response.json() })
-          .then((data) => this.selected_params = data)
-          .catch((error) => console.log(error));
-        }
-      });
-
-      var Ports = new Vue({
-        el: '#port-wrapper',
-        data: {
+          ],
           port_is_opened: false,
           commands: [
             //{{ commands_array }}
@@ -228,6 +184,15 @@
           }
         },
         methods: {
+          onSelectedChange:function(name, value){
+            this.selected_params.forEach((sel_param) => {
+              if(sel_param.name == name)
+              {
+                sel_param.value = value;
+              }
+            });
+            //console.log(JSON.stringify(this.selected_params));
+          },
           scanPorts: function () {
             fetch('/api/getportslist').then((response) => { return response.json() })
             .then((data) => this.ports = data.ports)
@@ -277,7 +242,16 @@
           }
         },
         beforeMount() {
-          this.scanPorts()
+          this.scanPorts();
+
+          fetch('/getallparams').then((response) => { return response.json() })
+          .then((data) => this.port_params = data)
+          .catch((error) => console.log(error));
+
+          fetch('/getconfigparams?config=' + document.getElementById('select_config').value)
+          .then((response) => { return response.json() })
+          .then((data) => this.selected_params = data)
+          .catch((error) => console.log(error));
         }
       })
 
@@ -294,25 +268,25 @@
         document.cookie = name + "=" + (value || "")  + expires + "; path=/";
       }
 
-      var params_array = ['config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
+      //var params_array = ['config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
 
       function getConfigPostParams()
       {
-        postStr = '';
-        for(param_id of params_array)
+        paramStr = '';
+        for(sel_param of Ports.selected_params)
         {
-          postStr += param_id + '=' + encodeURIComponent(document.getElementById(param_id).value);
-          if(param_id != params_array.slice(-1))
-            postStr += '&';
-        }
-        return postStr;
+          paramStr += sel_param.name + '=' + sel_param.value;
+          if(sel_param != Ports.selected_params[Ports.selected_params.length - 1])
+            paramStr += '&';
+        };
+        console.log('paramStr: ' + paramStr);
+        return paramStr;
       }
 
       var new_config_process = false;
 
       function setParamsActive(active, config_name = 'NewName') {
-        for(param_id of params_array)
-          document.getElementById(param_id).disabled = !active;
+        Ports.port_params_enabled = active;
 
         document.getElementById('select_config').disabled = active;
         document.getElementById('save_config_params').disabled = !active;
@@ -337,6 +311,7 @@
       document.addEventListener('DOMContentLoaded', function() {
 
 //~ CONFIGURATION
+        setParamsActive(false);
 
         document.getElementById('select_config').addEventListener('change', (event) => {
           setCookie('active', document.getElementById('select_config').value, 1);

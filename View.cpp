@@ -35,18 +35,6 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	data["error_code_ok"] = ErrorString[ErrorCode::Ok];
 	data["error_code_error"] = ErrorString[ErrorCode::Error];
 
-	data["all_port_speed"] = PortSpeed;
-	data["all_port_databits"] = PortDatabits;
-	data["all_port_parity"] = PortParity;
-	data["all_port_stopbits"] = PortStopbits;
-	data["all_port_flowcontrol"] = PortFlowcontrol;
-
-	data["port_speed"] = port_config.Speed;
-	data["port_databits"] = port_config.Databits;
-	data["port_parity"] = port_config.Parity;
-	data["port_stopbits"] = port_config.Stopbits;
-	data["port_flowcontrol"] = port_config.Flowcontrol;
-
 	data["port"] = "{{ port }}";
 	data["value"] = "{{ value }}";
 	data["label"] = "{{ label }}";

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 
-project(CppServer)
+project(PortsServer)
 set(PROJECT_BINARY_DIR build)
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -27,20 +27,23 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/Modules
 )
 
-add_executable(CppServer ${SOURCES})
-# add_custom_command(TARGET CppServer POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CppServer> ${PROJECT_SOURCE_DIR}/build/CppServer.exe
-#     COMMENT "Created ${PROJECT_SOURCE_DIR}/build/CppServer.exe"
+add_executable(PortsServer ${SOURCES})
+# add_custom_command(TARGET PortsServer POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:PortsServer> ${PROJECT_SOURCE_DIR}/build/PortsServer.exe
+#     COMMENT "Created ${PROJECT_SOURCE_DIR}/build/PortsServer.exe"
 # )
 
-# set_target_properties(CppServer PROPERTIES
+# set_target_properties(PortsServer PROPERTIES
 # 	RUNTIME_OUTPUT_DIRECTORY <debug ${PROJECT_SOURCE_DIR}/build/>
 # 	RUNTIME_OUTPUT_DIRECTORY_RELEASE <release ${PROJECT_SOURCE_DIR}/build/>
 # )
-# configure_file(${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/CppServer.exe COPYONLY)
+# configure_file(${PROJECT_SOURCE_DIR}/build/Debug/PortsServer.exe ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/PortsServer.exe COPYONLY)
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe")
-	file(COPY_FILE ${PROJECT_SOURCE_DIR}/build/Debug/CppServer.exe ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/CppServer.exe)
+set(TARGET_NAME PortsServer.exe)
+configure_file(${PROJECT_SOURCE_DIR}/NwJsApp/nwjs_index.js.in ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/index.js)
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/PortsServer.exe")
+	file(COPY_FILE ${PROJECT_SOURCE_DIR}/build/Debug/PortsServer.exe ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/PortsServer.exe)
 endif()
 
 if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/Configurations.sqlite")
