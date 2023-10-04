@@ -29,7 +29,6 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 
 	json data;
-	data["port"] = "{{ port }}";
 	data["configs"] = configurations;
 	data["config_selected"] = active_config;
 
@@ -48,6 +47,9 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	data["port_stopbits"] = port_config.Stopbits;
 	data["port_flowcontrol"] = port_config.Flowcontrol;
 
+	data["port"] = "{{ port }}";
+	data["value"] = "{{ value }}";
+	data["label"] = "{{ label }}";
 	data["cmd"] = "{{ cmd }}";
 	data["name"] = "{{ name }}";
 

@@ -26,24 +26,44 @@ version: 1
 
 /getallparams:
   displayName: GetAllParams
-  description: Returns parameters of selected configuration
+  description: Returns lists of all parameters
   get:
     responses:
       '200':
         body:
           application/json:
             example: |
-            {
-              "databits": "8",
-              "flowcontrol": "None",
-              "parity": "None",
-              "speed": "115200",
-              "stopbits": "1"
-            }
+            [
+              {
+                  "label": "Speed",
+                  "name": "speed",
+                  "values": ["9600","19200","115200"]
+              },
+              {
+                  "label": "Data bits",
+                  "name": "databits",
+                  "values": ["7","8"]
+              },
+              {
+                  "label": "Parity",
+                  "name": "parity",
+                  "values": ["None","Odd","Even"]
+              },
+              {
+                  "label": "Stop Bits",
+                  "name": "stopbits",
+                  "values": ["1","2"]
+              },
+              {
+                  "label": "Flow Ctrl",
+                  "name": "flowcontrol",
+                  "values": ["None","Yes"]
+              }
+            ]
 
 /getconfigparams:
   displayName: GetConfigParams
-  description: Returns lists of all parameters
+  description: Returns parameters of selected configuration
   get:
     body:
       text/plain:
@@ -54,13 +74,28 @@ version: 1
         body:
           application/json:
             example: |
-            {
-              "databits": ["7","8"],
-              "flowcontrol": ["None","Yes"],
-              "parity": ["None","Odd","Even"],
-              "speed": ["9600","19200","115200"],
-              "stopbits": ["1","2"]
-            }
+            [
+              {
+                  "name": "speed",
+                  "value": "115200"
+              },
+              {
+                  "name": "databits",
+                  "value": "8"
+              },
+              {
+                  "name": "parity",
+                  "value": "None"
+              },
+              {
+                  "name": "stopbits",
+                  "value": "1"
+              },
+              {
+                  "name": "flowcontrol",
+                  "value": "None"
+              }
+            ]
 
 /addnewconfig:
   displayName: AddNewConfig

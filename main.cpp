@@ -233,25 +233,28 @@ auto main(int argc, char* argv[]) -> int
 
 	server.Get("/getallparams", [&model](const Request &req, Response &res)
 	{
-		json data;
-		data["speed"] = PortSpeed;
-		data["databits"] = PortDatabits;
-		data["parity"] = PortParity;
-		data["stopbits"] = PortStopbits;
-		data["flowcontrol"] = PortFlowcontrol;
-		res.set_content(data.dump(), "application/json");
+		json speed; 	   speed["name"] = "speed";			 speed["label"] = "Speed";		  speed["values"] = PortSpeed;
+		json databits; 	databits["name"] = "databits";	  databits["label"] = "Data bits"; databits["values"] = PortDatabits;
+		json parity; 	  parity["name"] = "parity";		parity["label"] = "Parity";		 parity["values"] = PortParity;
+		json stopbits; 	stopbits["name"] = "stopbits";	  stopbits["label"] = "Stop Bits"; stopbits["values"] = PortStopbits;
+		json flowctrl; 	flowctrl["name"] = "flowcontrol"; flowctrl["label"] = "Flow Ctrl"; flowctrl["values"] = PortFlowcontrol;
+
+		res.set_content(std::format("[\n{},\n{},\n{},\n{},\n{}\n]",
+			speed.dump(), databits.dump(), parity.dump(), stopbits.dump(), flowctrl.dump()), "application/json");
 	});
 
 	server.Get("/getconfigparams", [&model](const Request &req, Response &res)
 	{
 		auto config = model.GetConfiguration(req.get_param_value("config").c_str());
-		json data;
-		data["speed"] = config.Speed;
-		data["databits"] = config.Databits;
-		data["parity"] = config.Parity;
-		data["stopbits"] = config.Stopbits;
-		data["flowcontrol"] = config.Flowcontrol;
-		res.set_content(data.dump(), "application/json");
+
+		json speed;			   speed["name"] = "speed";			   speed["value"] = config.Speed;
+		json databits; 		databits["name"] = "databits"; 		databits["value"] = config.Databits;
+		json parity; 		  parity["name"] = "parity"; 		  parity["value"] = config.Parity;
+		json stopbits; 		stopbits["name"] = "stopbits"; 		stopbits["value"] = config.Stopbits;
+		json flowctrl; 		flowctrl["name"] = "flowcontrol"; 	flowctrl["value"] = config.Flowcontrol;
+
+		res.set_content(std::format("[\n{},\n{},\n{},\n{},\n{}\n]",
+			speed.dump(), databits.dump(), parity.dump(), stopbits.dump(), flowctrl.dump()), "application/json");
 	});
 
 	server.Post("/addnewconfig", [&model](const Request &req, Response &res)

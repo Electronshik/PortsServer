@@ -69,7 +69,14 @@
           <button type="button" class="btn btn-success" id="edit_config_params">Edit Config</button>
           <button type="button" class="btn btn-success" id="save_config_params" disabled>Save</button>
           <button type="button" class="btn btn-success" id="cancel_config_params" disabled>Cancel</button>
-         </div>
+        </div>
+      </div>
+
+      <div id="config-wrapper">
+        <div class="row">
+          <config-parameter v-for="port_param in port_params" v-bind:name="'param-' + port_param.name" v-bind:label="port_param.label" v-bind:values="port_param.values">
+          </config-parameter>
+        </div>
       </div>
 
       <div id="port-wrapper">
@@ -149,10 +156,64 @@
                   </div>'
       })
 
+      Vue.component('config-parameter', {
+        props: ['name', 'label', 'values'],
+        computed: {
+          disabled: function() {
+            return !this.$parent.port_params_enabled;
+          },
+          selected: function() {
+            selectedVal = '';
+            this.$parent.selected_params.forEach((sel_param) => {
+              if(('param-' + sel_param.name) == this.name)
+              {
+                selectedVal = sel_param.value;
+              }
+            });
+            return selectedVal
+          }
+        },
+        template: '<div class="col-sm-2"> \
+                    <label :for="name">{{ label }}</label> \
+                    <select class="form-select" :id="name" :disabled="disabled"> \
+                      <option v-for="value in values" :value="value" :selected="value == selected">{{ value }}</option> \
+                    </select> \
+                  </div>'
+      })
+
+      var Configs = new Vue({
+        el: '#config-wrapper',
+        data: {
+          port_params_enabled: true,
+          port_params: [
+            {
+              "label": "Speed",
+              "name": "speed",
+              "values": ["9600","19200","115200"]
+            }
+          ],
+          selected_params: [
+            {
+              "name": "speed",
+              "value": "19200"
+            }
+          ]
+        },
+        beforeMount() {
+          fetch('/getallparams').then((response) => { return response.json() })
+          .then((data) => this.port_params = data)
+          .catch((error) => console.log(error));
+          fetch('/getconfigparams?config=' + document.getElementById('select_config').value)
+          .then((response) => { return response.json() })
+          .then((data) => this.selected_params = data)
+          .catch((error) => console.log(error));
+        }
+      });
+
       var Ports = new Vue({
         el: '#port-wrapper',
         data: {
-          port_is_opened : false,
+          port_is_opened: false,
           commands: [
             //{{ commands_array }}
           ],
