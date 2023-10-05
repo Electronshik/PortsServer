@@ -194,7 +194,7 @@ auto main(int argc, char* argv[]) -> int
 		bool active_conf_found = false;
 		if (active_config != "")
 		{
-			for ( auto &config : configurations)
+			for (auto &config : configurations)
 			{
 				if (config == active_config)
 				{
@@ -210,9 +210,8 @@ auto main(int argc, char* argv[]) -> int
 			res.set_header("Set-Cookie", "active=" + active_config);
 		}
 
-		auto config = model.GetConfiguration(active_config.c_str());
 		auto commands = model.GetCommands(active_config.c_str());
-		res.set_content(view.GetIndex(configurations, active_config, config, commands), "text/html");
+		res.set_content(view.GetIndex(commands), "text/html");
 	});
 
 	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request &req, Response &res)

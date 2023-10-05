@@ -22,16 +22,12 @@ View::~View()
 {
 }
 
-auto View::GetIndex(std::vector<std::string> &configurations, std::string &active_config,
-	SerialPortConfig &port_config, std::vector<Command> &commands) -> std::string
+auto View::GetIndex(std::vector<Command> &commands) -> std::string
 {
 	// std::ifstream index("../html/index.html");
 	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());
 
 	json data;
-	data["configs"] = configurations;
-	data["config_selected"] = active_config;
-
 	data["error_code_ok"] = ErrorString[ErrorCode::Ok];
 	data["error_code_error"] = ErrorString[ErrorCode::Error];
 
@@ -40,6 +36,7 @@ auto View::GetIndex(std::vector<std::string> &configurations, std::string &activ
 	data["label"] = "{{ label }}";
 	data["cmd"] = "{{ cmd }}";
 	data["name"] = "{{ name }}";
+	data["conf"] = "{{ conf }}";
 
 	std::vector<std::string> outjson_vec;
 	std::transform(commands.begin(), commands.end(), std::back_inserter(outjson_vec), [](Command& cmd) {

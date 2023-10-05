@@ -12,36 +12,44 @@
     <div class="container py-5">
       <h3 class="h3">Serial Port Communicator</h3>
 
-      <div class="row"  id="config-buttons">
-        <p>
-          <div class="col-sm-2">
-            <p>Active configuration:</p>
-          </div>
-          <div class="col-sm-3">
-            <select class="form-select" id="select_config" aria-label="Default select example">
-              {% for config in configs %}<option value="{{ config }}" {% if config == config_selected %} selected {% endif %} >{{ config }}</option>{% endfor %}
-            </select>
-          </div>
-          <div class="col-sm-4">
-            <button type="button" class="btn btn-success" id="add_config">Add configuration</button>
-            <button type="button" class="btn btn-success" id="delete_config">Delete configuration</button>
-          </div>
-        </p>
-      </div>
-
-      <div class="row py-2" id="config_new_name_wrapper"></div>
-
-      <div class="row">
-        <div class="col-sm-3">
-          <button type="button" class="btn btn-success" id="edit_config_params">Edit Config</button>
-          <button type="button" class="btn btn-success" id="save_config_params" disabled>Save</button>
-          <button type="button" class="btn btn-success" id="cancel_config_params" disabled>Cancel</button>
-        </div>
-      </div>
-
       <div id="config-vue-container">
         <div class="row">
-          <config-parameter v-for="port_param in port_params" v-bind:name="port_param.name" v-bind:id="'param-' + port_param.name" v-bind:label="port_param.label" v-bind:values="port_param.values">
+          <p>
+            <div class="col-sm-2">
+              <p>Active configuration:</p>
+            </div>
+            <div class="col-sm-3">
+              <select class="form-select" aria-label="Default select example" v-on:change="onConfigChange($event)" :disabled="port_params_enabled || portIsOpened">
+                <option v-for="conf in configurations" :selected="conf == config_name">{{ conf }}</option>
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <button type="button" class="btn btn-success" v-on:click="addConfiguration" :disabled="portIsOpened">Add configuration</button>
+              <button type="button" class="btn btn-success"v-on:click="deleteConfiguration" :disabled="portIsOpened">Delete configuration</button>
+            </div>
+          </p>
+        </div>
+
+        <div class="row py-2">
+          <div class="col-sm-2" v-show="port_params_enabled">
+            <label for="config_new_name">Configuration Name: </label>
+          </div>
+          <div class="col-sm-3" v-show="port_params_enabled">
+            <input type="text" class="form-control" v-model="config_new_name" ref="new_config" id="config_new_name" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-3">
+            <button type="button" class="btn btn-success" v-on:click="enableConfigEdit" :disabled="portIsOpened">Edit Config</button>
+            <button type="button" class="btn btn-success" v-on:click="saveConfigEdit" :disabled="!port_params_enabled || portIsOpened">Save</button>
+            <button type="button" class="btn btn-success" v-on:click="cancelConfigEdit" :disabled="!port_params_enabled || portIsOpened">Cancel</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <config-parameter v-for="port_param in port_params" v-bind:name="port_param.name" v-bind:id="'param-' + port_param.name"
+            v-bind:label="port_param.label" v-bind:values="port_param.values">
           </config-parameter>
         </div>
 
@@ -50,14 +58,14 @@
             <p>Available Ports:</p>
           </div>
           <div class="col-sm-3">
-            <select class="form-select" id="select_ports" :disabled="portIsOpened" aria-label="Default select example">
+            <select class="form-select" id="select_ports" :disabled="portIsOpened || port_params_enabled" aria-label="Default select example">
               <option v-for="port in ports" :value="port">{{ port }}</option>
             </select>
           </div>
           <div class="col-sm-5">
-            <button type="button" class="btn btn-success" id="port_scan" v-on:click="scanPorts" :disabled="portIsOpened">Rescan Ports</button>
-            <button type="button" class="btn btn-primary" id="port_open" v-on:click="openPort" :disabled="portIsOpened">Port Open</button>
-            <button type="button" class="btn btn-primary" id="port_close" v-on:click="closePort" :disabled="portIsClosed">Port Close</button>
+            <button type="button" class="btn btn-success" v-on:click="scanPorts" :disabled="portIsOpened || port_params_enabled">Rescan Ports</button>
+            <button type="button" class="btn btn-primary" v-on:click="openPort" :disabled="portIsOpened || port_params_enabled">Port Open</button>
+            <button type="button" class="btn btn-primary" v-on:click="closePort" :disabled="portIsClosed || port_params_enabled">Port Close</button>
           </div>
         </div>
 
@@ -155,7 +163,11 @@
       var Ports = new Vue({
         el: '#config-vue-container',
         data: {
-          port_params_enabled: true,
+          config_name: '',
+          configurations: ['default'],
+          new_config_flag: false,
+          config_new_name: '',
+          port_params_enabled: false,
           port_params: [
             {
               "label": "Speed",
@@ -176,6 +188,16 @@
           ports : ''
         },
         computed: {
+          new_config_process: function() {
+            if(this.new_config_flag)
+            {
+              if(this.port_params_enabled)
+                return true;
+              else
+                this.new_config_flag = false;
+            }
+            return false;
+          },
           portIsOpened: function() {
             return this.port_is_opened;
           },
@@ -184,14 +206,92 @@
           }
         },
         methods: {
-          onSelectedChange:function(name, value){
+          onConfigChange: function(event) {
+            this.config_name = event.target.value;
+            setCookie('active', event.target.value, 1);
+            location.reload();
+          },
+          addConfiguration: function() {
+            this.new_config_flag = true;
+            this.enableConfigEdit();
+            setTimeout(() => {
+              this.$refs.new_config.focus();
+              this.$refs.new_config.select();
+              console.log("New configuration process");
+            }, "50");
+          },
+          deleteConfiguration: function() {
+            if (confirm('Are you sure you want to remove this configuration?'))
+            {
+              console.log('Thing was saved to the database.');
+              fetch('/deleteconfig?config=' + this.config_name)
+              .then((response) => { return response.json() })
+              .then((data) => {
+                console.log(data);
+                location.reload();
+              })
+              .catch((error) => console.log(error));
+            }
+          },
+          onSelectedChange: function(name, value) {
             this.selected_params.forEach((sel_param) => {
               if(sel_param.name == name)
-              {
                 sel_param.value = value;
-              }
             });
             //console.log(JSON.stringify(this.selected_params));
+          },
+          enableConfigEdit: function () {
+            Ports.port_params_enabled = true;
+            this.config_new_name = this.config_name;
+          },
+          saveConfigEdit: function () {
+            let body = getConfigPostParams();
+            if(this.new_config_process)
+            {
+              let new_name = document.getElementById('config_new_name').value;
+              body += '&config_name=' + new_name;
+              fetch('/addnewconfig', {
+                method: 'POST',
+                body: body
+              })
+              .then((response) => { return response.json() })
+              .then((data) => {
+                if(data.result == ErrorCodeOk)
+                {
+                  setCookie('active', new_name, 1);
+                  location.reload();
+                }
+              })
+              .catch((error) => console.log(error));
+            }
+            else
+            {
+              //let config_name = document.getElementById('select_config').value;
+              body += '&config_name=' + this.config_name;
+              let new_name = document.getElementById('config_new_name').value;
+              if(this.config_name != new_name)
+              {
+                body += '&config_new_name=' + new_name;
+              }
+              fetch('/saveconfigparams', {
+                method: 'POST',
+                body: body
+              })
+              .then((response) => { return response.json() })
+              .then((data) => {
+                if(this.config_name != new_name)
+                {
+                  setCookie('active', new_name, 1);
+                  location.reload();
+                }
+              })
+              .catch((error) => console.log(error));
+            }
+  
+            Ports.port_params_enabled = false;
+          },
+          cancelConfigEdit: function () {
+            Ports.port_params_enabled = false;
           },
           scanPorts: function () {
             fetch('/api/getportslist').then((response) => { return response.json() })
@@ -242,13 +342,19 @@
           }
         },
         beforeMount() {
+          fetch('/getconfiglist').then((response) => { return response.json() })
+          .then((data) => this.configurations = data["configurations"])
+          .catch((error) => console.log(error));
+
+          this.config_name = getCookie('active');
+
           this.scanPorts();
 
           fetch('/getallparams').then((response) => { return response.json() })
           .then((data) => this.port_params = data)
           .catch((error) => console.log(error));
 
-          fetch('/getconfigparams?config=' + document.getElementById('select_config').value)
+          fetch('/getconfigparams?config=' + this.config_name)
           .then((response) => { return response.json() })
           .then((data) => this.selected_params = data)
           .catch((error) => console.log(error));
@@ -258,7 +364,8 @@
       var ErrorCodeOk = '{{ error_code_ok }}';
       var ErrorCodeError = '{{ error_code_error }}';
 
-      function setCookie(name, value, days) {
+      function setCookie(name, value, days)
+      {
         let expires = "";
         if (days) {
           let date = new Date();
@@ -268,7 +375,12 @@
         document.cookie = name + "=" + (value || "")  + expires + "; path=/";
       }
 
-      //var params_array = ['config_speed', 'config_databits', 'config_parity', 'config_stopbits', 'config_flowcontrol'];
+      function getCookie(name)
+      {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
 
       function getConfigPostParams()
       {
@@ -283,115 +395,15 @@
         return paramStr;
       }
 
-      var new_config_process = false;
-
-      function setParamsActive(active, config_name = 'NewName') {
-        Ports.port_params_enabled = active;
-
-        document.getElementById('select_config').disabled = active;
-        document.getElementById('save_config_params').disabled = !active;
-        document.getElementById('cancel_config_params').disabled = !active;
-
-        let config_new_name_wrapper = document.getElementById('config_new_name_wrapper');
-        if(active)
-        {
-          config_new_name_wrapper.innerHTML = '<div class="col-sm-2"><label for="config_new_name">Configuration Name: </label></div>' + 
-              '<div class="col-sm-3"><input type="text" class="form-control" id="config_new_name" value="' +
-              config_name + '" /></div>';
-        }
-        else
-        {
-          config_new_name_wrapper.innerHTML = '';
-          if(new_config_process == true)
-            new_config_process = false;
-        }
-      };
-
 
       document.addEventListener('DOMContentLoaded', function() {
 
 //~ CONFIGURATION
-        setParamsActive(false);
 
-        document.getElementById('select_config').addEventListener('change', (event) => {
-          setCookie('active', document.getElementById('select_config').value, 1);
-          location.reload();
-        });
-
-        document.getElementById('add_config').addEventListener('click', () => {
-          new_config_process = true;
-          setParamsActive(true);
-          document.getElementById('config_new_name').select();
-        });
-
-			  document.getElementById('delete_config').addEventListener('click', (event) => {
-          event.preventDefault();
-          if (confirm('Are you sure you want to remove this configuration?')) {
-            console.log('Thing was saved to the database.');
-            fetch('/deleteconfig?config=' + document.getElementById('select_config').value)
-            .then((response) => { return response.json() })
-            .then((data) => {
-              console.log(data);
-              location.reload();
-            })
-            .catch((error) => console.log(error));
-          }
-        }, false);
-
-        document.getElementById('edit_config_params').addEventListener('click', () => {
-          setParamsActive(true, document.getElementById('select_config').value);
-        });
-
-        document.getElementById('save_config_params').addEventListener('click', () => {
-          let body = getConfigPostParams();
-          if(new_config_process)
-          {
-            let new_name = document.getElementById('config_new_name').value;
-            body += '&config_name=' + new_name;
-            fetch('/addnewconfig', {
-              method: 'POST',
-              body: body
-            })
-            .then((response) => { return response.json() })
-            .then((data) => {
-              if(data.result == ErrorCodeOk)
-              {
-                setCookie('active', new_name, 1);
-                location.reload();
-              }
-            })
-            .catch((error) => console.log(error));
-          }
-          else
-          {
-            let config_name = document.getElementById('select_config').value;
-            body += '&config_name=' + config_name;
-            let new_name = document.getElementById('config_new_name').value;
-            if(config_name != new_name)
-            {
-              body += '&config_new_name=' + new_name;
-            }
-            fetch('/saveconfigparams', {
-              method: 'POST',
-              body: body
-            })
-            .then((response) => { return response.json() })
-            .then((data) => {
-              if(config_name != new_name)
-              {
-                setCookie('active', new_name, 1);
-                location.reload();
-              }
-            })
-            .catch((error) => console.log(error));
-          }
-
-          setParamsActive(false);
-        });
-
-        document.getElementById('cancel_config_params').addEventListener('click', () => {
-          setParamsActive(false);
-        });
+        //document.getElementById('select_config').addEventListener('change', (event) => {
+          //setCookie('active', document.getElementById('select_config').value, 1);
+          //location.reload();
+        //});
 
 //~ CONFIGURATION
 
