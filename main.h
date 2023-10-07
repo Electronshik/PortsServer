@@ -4,7 +4,12 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <optional>
+#include <unordered_set>
+#include <tuple>
+
+import Setting;
 
 using ConfigList = std::vector<std::string>;
 
@@ -18,27 +23,76 @@ enum class ErrorCode
 
 extern std::map<ErrorCode, std::string> ErrorString;
 
-extern std::array<std::string, 3> PortSpeed;
-extern std::array<std::string, 2> PortDatabits;
-extern std::array<std::string, 3> PortParity;
-extern std::array<std::string, 2> PortStopbits;
-extern std::array<std::string, 2> PortFlowcontrol;
+template <typename T = std::string, class V = std::vector<T>>
+struct SerialPortSettings
+{
+	Setting<T, V> Speed;
+	Setting<T, V> Databits;
+	Setting<T, V> Parity;
+	Setting<T, V> Stopbits;
+	Setting<T, V> Flowcontrol;
+	// std::string Format = "ASCII";
+
+	std::unordered_map<std::string, Setting<T, V>*> AllParamsList = {
+		{"speed", &this->Speed},
+		{"databits", &this->Databits},
+		{"parity", &this->Parity},
+		{"stopbits", &this->Stopbits},
+		{"flowcontrol", &this->Flowcontrol}
+	};
+	bool ContainsValue(std::string name, T value)
+	{
+		if (this->AllParamsList[name]->Contains(value))
+			return true;
+		return false;
+	}
+};
+
+extern SerialPortSettings<std::string, std::vector<std::string>> SerialPortAllSettings;
 
 struct SerialPortConfig
 {
-	// std::string Name;
-	std::string Speed = "115200";
-	std::string Databits = "8";
-	std::string Parity = "None";
-	std::string Stopbits = "1";
-	std::string Flowcontrol = "None";
+	std::string Speed;
+	std::string Databits;
+	std::string Parity;
+	std::string Stopbits;
+	std::string Flowcontrol;
 	std::string Format = "ASCII";
+
+	struct HashFunction
+	{
+		size_t operator()(const std::tuple<const char*, std::string*> &x) const
+		{
+			return std::hash<const char*>{}(get<0>(x));
+		}
+	};
+	std::unordered_set<std::tuple<const char*, std::string*>, HashFunction> ParamsList = {
+		{"speed", &this->Speed},
+		{"databits", &this->Databits},
+		{"parity", &this->Parity},
+		{"stopbits", &this->Stopbits},
+		{"flowcontrol", &this->Flowcontrol}
+	};
+
+	SerialPortConfig() :
+		Speed(SerialPortAllSettings.Speed.GetDefaultValue()),
+		Databits(SerialPortAllSettings.Databits.GetDefaultValue()),
+		Parity(SerialPortAllSettings.Parity.GetDefaultValue()),
+		Stopbits(SerialPortAllSettings.Stopbits.GetDefaultValue()),
+		Flowcontrol(SerialPortAllSettings.Flowcontrol.GetDefaultValue()) {}
 };
 
 struct Command
 {
-	std::string Name = "NULL";
-	std::string Cmd = "NULL";
+	std::string Name;
+	std::string Cmd;
+	Command() {}
+	Command(Command&& source) noexcept :
+		Name(std::move(source.Name)),
+		Cmd(std::move(source.Cmd))
+	{
+		std::cout << "Command el was moved! Name: " << Name.c_str() << source.Name.c_str() << std::endl;
+	}
 };
 
 auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool;

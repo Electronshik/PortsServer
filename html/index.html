@@ -164,7 +164,7 @@
         el: '#config-vue-container',
         data: {
           config_name: '',
-          configurations: ['default'],
+          configurations: ['test'],
           new_config_flag: false,
           config_new_name: '',
           port_params_enabled: false,
@@ -182,10 +182,8 @@
             }
           ],
           port_is_opened: false,
-          commands: [
-            //{{ commands_array }}
-          ],
-          ports : ''
+          ports : '',
+          commands: []
         },
         computed: {
           new_config_process: function() {
@@ -358,11 +356,16 @@
           .then((response) => { return response.json() })
           .then((data) => this.selected_params = data)
           .catch((error) => console.log(error));
+
+          fetch('/getconfigcommands?config=' + this.config_name)
+          .then((response) => { return response.json() })
+          .then((data) => this.commands = data["commands_array"])
+          .catch((error) => console.log(error));
         }
       })
 
-      var ErrorCodeOk = '{{ error_code_ok }}';
-      var ErrorCodeError = '{{ error_code_error }}';
+      var ErrorCodeOk = '{{ inja_error_code_ok }}';
+      var ErrorCodeError = '{{ inja_error_code_error }}';
 
       function setCookie(name, value, days)
       {

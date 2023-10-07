@@ -12,7 +12,7 @@ auto SerialPort::GetPortsList() -> std::vector<std::string>
 		size = sizeof CommConfig;
 		std::string port_name = "COM" + std::to_string(i);
 		if(GetDefaultCommConfig((LPCSTR)port_name.c_str(), &CommConfig, &size) || size > sizeof CommConfig)
-			result.push_back(port_name);
+			result.push_back(std::move(port_name));
 	}
 
 	return result;

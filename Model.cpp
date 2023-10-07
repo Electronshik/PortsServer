@@ -62,27 +62,10 @@ auto Model::GetConfiguration(const char *name) -> SerialPortConfig
 	auto clbk = [](SerialPortConfig *port_config, int argc, char **azColName, char **argv) {
 		for (size_t i = 0; i < argc; i++)
 		{
-			// std::string param = argv[i];
-			// printf("Col: %s : %s\n", azColName[i], argv[i]);
-			if (strcmp(azColName[i], "speed") == 0)
+			for (auto &param : port_config->ParamsList)
 			{
-				port_config->Speed.assign(argv[i]);
-			}
-			else if (strcmp(azColName[i], "databits") == 0)
-			{
-				port_config->Databits.assign(argv[i]);
-			}
-			else if (strcmp(azColName[i], "parity") == 0)
-			{
-				port_config->Parity.assign(argv[i]);
-			}
-			else if (strcmp(azColName[i], "stopbits") == 0)
-			{
-				port_config->Stopbits.assign(argv[i]);
-			}
-			else if (strcmp(azColName[i], "flowcontrol") == 0)
-			{
-				port_config->Flowcontrol.assign(argv[i]);
+				if (strcmp(azColName[i], get<0>(param)) == 0)
+					get<1>(param)->assign(argv[i]);
 			}
 		}
 	};
@@ -141,6 +124,8 @@ auto Model::GetCommands(const char *configuration) -> std::vector<Command>
 
 	auto clbk = [](std::vector<Command> *commands_list, int argc, char **azColName, char **argv) {
 		Command command;
+		command.Name = "NULL";
+		command.Cmd = "NULL";
 		for (size_t i = 0; i < argc; i++)
 		{
 			// printf("Col: %s : %s\n", azColName[i], argv[i]);
@@ -153,7 +138,8 @@ auto Model::GetCommands(const char *configuration) -> std::vector<Command>
 				command.Cmd = argv[i];
 			}
 		}
-		commands_list->push_back(command);
+		if (command.Name != "NULL" && command.Cmd != "NULL")
+			commands_list->push_back(std::move(command));
 	};
 
 	std::string query = std::format("SELECT id, name, command FROM {}", configuration);

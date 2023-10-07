@@ -23,36 +23,12 @@ std::map<ErrorCode, std::string> ErrorString = {
 	{ ErrorCode::Error, "Error" }
 };
 
-std::array<std::string, 3> PortSpeed = 
-{
-	"9600",
-	"19200",
-	"115200"
-};
-
-std::array<std::string, 2> PortDatabits =
-{
-	"7",
-	"8"
-};
-
-std::array<std::string, 3> PortParity =
-{
-	"None",
-	"Odd",
-	"Even"
-};
-
-std::array<std::string, 2> PortStopbits =
-{
-	"1",
-	"2"
-};
-
-std::array<std::string, 2> PortFlowcontrol =
-{
-	"None",
-	"Yes"
+SerialPortSettings<std::string, std::vector<std::string>> SerialPortAllSettings = {
+	.Speed =		Setting({"9600", "19200", "115200"},	"115200"),
+	.Databits =		Setting({"7", "8"},						"8"),
+	.Parity =		Setting({"None", "Odd", "Even"},		"None"),
+	.Stopbits =		Setting({"1", "2"},						"1"),
+	.Flowcontrol =	Setting({"None", "Yes"},				"None"),
 };
 
 auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool
@@ -60,48 +36,21 @@ auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool
 	std::smatch config_match;
 	int param_num = 0;
 
-	std::regex pattern("speed=([a-zA-Z0-9]+)");
-	if (std::regex_search(str, config_match, pattern))
+	for (auto& [name, value] : config->ParamsList)
 	{
-		param_num++;
-		config->Speed = config_match[1];
+		std::string pat{name};
+		std::regex pattern((pat + "=([a-zA-Z0-9]+)").c_str());
+		if (std::regex_search(str, config_match, pattern))
+		{
+			if (SerialPortAllSettings.ContainsValue(name, config_match[1].str()))
+			{
+				param_num++;
+				value->assign(config_match[1]);
+			}
+		}
 	}
 
-	pattern = "databits=([a-zA-Z0-9]+)";
-	if (std::regex_search(str, config_match, pattern))
-	{
-		param_num++;
-		config->Databits = config_match[1];
-	}
-
-	pattern = "parity=([a-zA-Z0-9]+)";
-	if (std::regex_search(str, config_match, pattern))
-	{
-		param_num++;
-		config->Parity = config_match[1];
-	}
-
-	pattern = "stopbits=([a-zA-Z0-9]+)";
-	if (std::regex_search(str, config_match, pattern))
-	{
-		param_num++;
-		config->Stopbits = config_match[1];
-	}
-
-	pattern = "flowcontrol=([a-zA-Z0-9]+)";
-	if (std::regex_search(str, config_match, pattern))
-	{
-		param_num++;
-		config->Flowcontrol = config_match[1];
-	}
-
-	// std::cout << "Param Speed: " << config->Speed << std::endl;
-	// std::cout << "Param Databits: " << config->Databits << std::endl;
-	// std::cout << "Param Parity: " << config->Parity << std::endl;
-	// std::cout << "Param Stopbits: " << config->Stopbits << std::endl;
-	// std::cout << "Param Flowcontrol: " << config->Flowcontrol << std::endl;
-
-	return param_num == 5;
+	return param_num == config->ParamsList.size();
 }
 
 auto ParseGetPostParam(const std::string &str, const std::string &name) -> std::optional<std::string>
@@ -119,11 +68,11 @@ auto ParseGetPostParam(const std::string &str, const std::string &name) -> std::
 void CreateDefaultConfiguration(Model &model)
 {
 	SerialPortConfig PortConfig;
-	model.AddConfiguration("default", PortConfig);
+	model.AddConfiguration("test", PortConfig);
 	PortConfig.Speed = "9600";
 	PortConfig.Stopbits = "2";
-	model.AddCommand("default", "default_cmd", "0x01");
-	model.AddCommand("default", "default_cmd2", "0x02");
+	model.AddCommand("test", "test_cmd", "0x01");
+	model.AddCommand("test", "test_cmd2", "0x02");
 }
 
 auto main(int argc, char* argv[]) -> int
@@ -210,8 +159,7 @@ auto main(int argc, char* argv[]) -> int
 			res.set_header("Set-Cookie", "active=" + active_config);
 		}
 
-		auto commands = model.GetCommands(active_config.c_str());
-		res.set_content(view.GetIndex(commands), "text/html");
+		res.set_content(view.GetIndex(), "text/html");
 	});
 
 	server.Get(R"(/(html/[-/_\\.\d\w]+(\.css|\.js)))", [](const Request &req, Response &res)
@@ -232,11 +180,16 @@ auto main(int argc, char* argv[]) -> int
 
 	server.Get("/getallparams", [&model](const Request &req, Response &res)
 	{
-		json speed; 	   speed["name"] = "speed";			 speed["label"] = "Speed";		  speed["values"] = PortSpeed;
-		json databits; 	databits["name"] = "databits";	  databits["label"] = "Data bits"; databits["values"] = PortDatabits;
-		json parity; 	  parity["name"] = "parity";		parity["label"] = "Parity";		 parity["values"] = PortParity;
-		json stopbits; 	stopbits["name"] = "stopbits";	  stopbits["label"] = "Stop Bits"; stopbits["values"] = PortStopbits;
-		json flowctrl; 	flowctrl["name"] = "flowcontrol"; flowctrl["label"] = "Flow Ctrl"; flowctrl["values"] = PortFlowcontrol;
+		json speed; 	   	speed["name"] = "speed";		speed["label"] = "Speed";
+							speed["values"] = SerialPortAllSettings.Speed.GetAllValues();
+		json databits; 	databits["name"] = "databits";	  databits["label"] = "Data bits";
+						databits["values"] = SerialPortAllSettings.Databits.GetAllValues();
+		json parity;		parity["name"] = "parity";		parity["label"] = "Parity";
+							parity["values"] = SerialPortAllSettings.Parity.GetAllValues();
+		json stopbits; 	stopbits["name"] = "stopbits";	  stopbits["label"] = "Stop Bits";
+						stopbits["values"] = SerialPortAllSettings.Stopbits.GetAllValues();
+		json flowctrl; 	flowctrl["name"] = "flowcontrol"; flowctrl["label"] = "Flow Ctrl";
+						flowctrl["values"] = SerialPortAllSettings.Flowcontrol.GetAllValues();
 
 		res.set_content(std::format("[\n{},\n{},\n{},\n{},\n{}\n]",
 			speed.dump(), databits.dump(), parity.dump(), stopbits.dump(), flowctrl.dump()), "application/json");
@@ -275,6 +228,8 @@ auto main(int argc, char* argv[]) -> int
 
 	server.Get("/deleteconfig", [&model](const Request &req, Response &res)
 	{
+		auto result = ErrorCode::Error;
+
 		model.DeleteConfiguration(req.get_param_value("config").c_str());
 		json data;
 		data["result"] = ErrorString[ErrorCode::Ok];
@@ -303,12 +258,37 @@ auto main(int argc, char* argv[]) -> int
 		res.set_content(data.dump(), "application/json");
 	});
 
+	server.Get("/getconfigcommands", [&model](const Request &req, Response &res)
+	{
+		json data;
+
+		auto result = ErrorCode::Error;
+		std::string config_name = req.get_param_value("config");
+		if (config_name != "")
+		{
+			auto commands = model.GetCommands(config_name.c_str());
+			std::vector<json> outjson_vec;
+			std::transform(commands.begin(), commands.end(), std::back_inserter(outjson_vec), [](Command& cmd) {
+				json command_json;
+				command_json["cmd"] = cmd.Cmd;
+				command_json["name"] = cmd.Name;
+				return command_json;
+			});
+
+			data["commands_array"] = outjson_vec;
+			result = ErrorCode::Ok;
+		}
+		data["result"] = ErrorString[result];
+		res.set_content(data.dump(), "application/json");
+	});
+
 	server.Get("/api/getportslist", Api::GetPortsList);
 	server.Post("/api/openport", Api::OpenPort);
 	server.Post("/api/closeport", Api::ClosePort);
 	server.Post("/api/sendtoport", Api::SendToPort);
 	server.Post("/api/readfromport", Api::ReadFromPort);
 	server.Get("/api/gettestdata", Api::GetTestData);
+
 
 	// server.Get("/body-header-param", [](const Request &req, Response &res)
 	// {

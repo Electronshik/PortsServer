@@ -68,7 +68,7 @@ version: 1
     body:
       text/plain:
         type: string
-        example: config=config
+        example: config=test
     responses:
       '200':
         body:
@@ -104,7 +104,7 @@ version: 1
     body:
       text/plain:
         type: string
-        example: config=config
+        example: config=test
     responses:
       '200':
         body:
@@ -126,7 +126,7 @@ version: 1
     body:
       text/plain:
         type: string
-        example: config=config
+        example: config=test
     responses:
       '200':
         body:
@@ -143,7 +143,7 @@ version: 1
     body:
       text/plain:
         type: string
-        example: config=config&config_new_name=new_name
+        example: config=test&config_new_name=new_name
     responses:
       '200':
         body:
@@ -157,6 +157,33 @@ version: 1
               {
                 "result": "Error"
               }
+
+/getconfigcommands:
+  displayName: GetConfigCommands
+  description: Get saved commands for the selected configuration
+  post:
+    body:
+      text/plain:
+        type: string
+        example: config=test
+    responses:
+      '200':
+        body:
+          application/json:
+            examples: |
+            {
+              "commands_array": [
+                  {
+                      "cmd": "0x01",
+                      "name": "test_cmd"
+                  },
+                  {
+                      "cmd": "0x02",
+                      "name": "test_cmd2"
+                  }
+              ],
+              "result": "Ok"
+            }
 
 /api:
   /getportslist:
@@ -179,7 +206,7 @@ version: 1
       body:
         text/plain:
           type: string
-          example: port=COM88&config_speed=9600&config_databits=8&config_parity=None&config_stopbits=2&config_flowcontrol=None
+          example: port=COM88&speed=9600&databits=8&parity=None&stopbits=2&flowcontrol=None
       responses:
         '200':
           body:

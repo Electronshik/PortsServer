@@ -86,7 +86,8 @@
 		"numeric": "cpp",
 		"stack": "cpp",
 		"valarray": "cpp",
-		"*.ixx": "cpp"
+		"*.ixx": "cpp",
+		"unordered_set": "cpp"
 	},
 	"cmake.configureOnOpen": true
 }
