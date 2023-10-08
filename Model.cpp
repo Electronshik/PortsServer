@@ -35,27 +35,35 @@ int sql_callback(void *data, int argc, char **argv, char **azColName)
 	return 0;
 }
 
-auto Model::GetConfigurations() -> ConfigList
+auto Model::GetConfigurations() const -> ConfigList
 {
-	ConfigList config_list;
+	if (CachedConfigurations.empty())
+	{
+		ConfigList config_list;
 
-	auto clbk = [](ConfigList *result, int argc, char **azColName, char **argv) {
-		for (size_t i = 0; i < argc; i++)
-		{
-			// printf("Col: %s : %s\n", azColName[i], argv[i]);
-			if (strcmp(azColName[i], "name") == 0)
+		auto clbk = [](ConfigList *result, int argc, char **azColName, char **argv) {
+			for (size_t i = 0; i < argc; i++)
 			{
-				((ConfigList*)result)->emplace_back(argv[i]);
+				// printf("Col: %s : %s\n", azColName[i], argv[i]);
+				if (strcmp(azColName[i], "name") == 0)
+				{
+					((ConfigList*)result)->emplace_back(argv[i]);
+				}
 			}
-		}
-	};
+		};
 
-	std::string query = "SELECT name FROM configurations";
-	sqlite3_exec(this->db, query.c_str(), sql_callback<decltype(clbk), ConfigList>, &config_list, NULL);
-	return config_list;
+		std::string query = "SELECT name FROM configurations";
+		if (sqlite3_exec(this->db, query.c_str(), sql_callback<decltype(clbk), ConfigList>, &config_list, NULL) == SQLITE_OK)
+		{
+			std::scoped_lock lock(cache_mutex);
+			this->CachedConfigurations = std::move(config_list);
+		}
+	}
+
+	return this->CachedConfigurations;
 }
 
-auto Model::GetConfiguration(const char *name) -> SerialPortConfig
+auto Model::GetConfiguration(const char *name) const -> SerialPortConfig
 {
 	SerialPortConfig port_config;
 
@@ -75,17 +83,23 @@ auto Model::GetConfiguration(const char *name) -> SerialPortConfig
 	return port_config;
 }
 
-void Model::RenameConfiguration(const char *name, const char *new_name)
+void Model::RenameConfiguration(const char *name, const char *new_name) const
 {
+	std::scoped_lock lock(db_mutex);
+
 	std::string query = std::format("ALTER TABLE {0} RENAME TO {1}", name, new_name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 
 	query = std::format("UPDATE configurations SET name='{0}' WHERE name='{1}'", new_name, name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
+
+	this->ResetCache();
 }
 
-void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig)
+void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig) const
 {
+	std::scoped_lock lock(db_mutex);
+
 	std::string query = std::format("INSERT INTO configurations (name, speed, databits, parity, stopbits, flowcontrol, format)	\
 		VALUES('{0}','{1}','{2}','{3}','{4}','{5}','{6}')",
 		name, PortConfig.Speed, PortConfig.Databits, PortConfig.Parity,
@@ -97,9 +111,11 @@ void Model::AddConfiguration(const char *name, SerialPortConfig &PortConfig)
 		name TEXT NOT NULL UNIQUE, command TEXT)", name);
 
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
+
+	this->ResetCache();
 }
 
-void Model::UpdateConfiguration(const char *name, SerialPortConfig &PortConfig)
+void Model::UpdateConfiguration(const char *name, SerialPortConfig &PortConfig) const
 {
 	std::string query = std::format("UPDATE configurations SET speed='{0}', databits='{1}', parity='{2}',	\
 		stopbits='{3}', flowcontrol='{4}', format='{5}' WHERE name='{6}'",
@@ -109,16 +125,20 @@ void Model::UpdateConfiguration(const char *name, SerialPortConfig &PortConfig)
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
-void Model::DeleteConfiguration(const char *name)
+void Model::DeleteConfiguration(const char *name) const
 {
+	std::scoped_lock lock(db_mutex);
+
 	std::string query = std::format("DELETE FROM configurations	WHERE name='{}'", name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 
 	query = std::format("DROP TABLE {}", name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
+
+	this->ResetCache();
 }
 
-auto Model::GetCommands(const char *configuration) -> std::vector<Command>
+auto Model::GetCommands(const char *configuration) const -> std::vector<Command>
 {
 	std::vector<Command> commands_list;
 
@@ -139,7 +159,7 @@ auto Model::GetCommands(const char *configuration) -> std::vector<Command>
 			}
 		}
 		if (command.Name != "NULL" && command.Cmd != "NULL")
-			commands_list->push_back(std::move(command));
+			commands_list->emplace_back(std::move(command));
 	};
 
 	std::string query = std::format("SELECT id, name, command FROM {}", configuration);
@@ -147,20 +167,26 @@ auto Model::GetCommands(const char *configuration) -> std::vector<Command>
 	return commands_list;
 }
 
-void Model::AddCommand(const char *configuration, const char *cmd_name, const char *command)
+void Model::AddCommand(const char *configuration, const char *cmd_name, const char *command) const
 {
 	std::string query = std::format("INSERT INTO {0}(name, command) VALUES('{1}', '{2}')", configuration, cmd_name, command);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
-void Model::UpdateCommand(const char *configuration, const char *cmd_name, const char *command)
+void Model::UpdateCommand(const char *configuration, const char *cmd_name, const char *command) const
 {
 	std::string query = std::format("UPDATE {0} SET command='{1}' WHERE name='{2}'", configuration, command, cmd_name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
-void Model::DeleteCommand(const char *configuration, const char *cmd_name)
+void Model::DeleteCommand(const char *configuration, const char *cmd_name) const
 {
 	std::string query = std::format("DELETE FROM {0} WHERE name='{1}'", configuration, cmd_name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);	
+}
+
+void Model::ResetCache() const
+{
+	std::scoped_lock lock(cache_mutex);
+	ConfigList{}.swap(this->CachedConfigurations);
 }

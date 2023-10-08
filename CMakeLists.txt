@@ -4,6 +4,7 @@ project(PortsServer)
 set(PROJECT_BINARY_DIR build)
 
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)

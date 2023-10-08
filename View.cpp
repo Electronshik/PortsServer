@@ -19,7 +19,7 @@ View::~View()
 {
 }
 
-auto View::GetIndex() -> std::string
+auto View::GetIndex() const -> std::string
 {
 	// std::ifstream index("../html/index.html");
 	// std::string body((std::istreambuf_iterator<char>(index)), std::istreambuf_iterator<char>());

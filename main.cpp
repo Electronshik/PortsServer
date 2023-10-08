@@ -7,6 +7,7 @@
 #include <format>
 #include <regex>
 #include <memory>
+#include <type_traits>
 
 #include "SerialPort.h"
 
@@ -77,6 +78,9 @@ void CreateDefaultConfiguration(Model &model)
 
 auto main(int argc, char* argv[]) -> int
 {
+	static_assert(std::is_move_constructible_v<Command>);
+	static_assert(std::is_nothrow_move_constructible_v<Command>);
+
 	if (argc > 1)
 	{
 		print_nl("HtmlGlobalPath: {}", argv[1]);
@@ -135,9 +139,6 @@ auto main(int argc, char* argv[]) -> int
 				active_config = cookie_config.value();
 			print_nl("Active config (from cookie): ()", active_config.c_str());
 		}
-
-		// res.set_header("Set-Cookie", "active=test");
-		// res.set_header("Set-Cookie", "last=first");
 
 		ConfigList configurations = model.GetConfigurations();
 		bool active_conf_found = false;

@@ -6,5 +6,5 @@ class View
 	public:
 		View();
 		~View();
-		auto GetIndex() -> std::string;
+		auto GetIndex() const -> std::string;
 };

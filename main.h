@@ -11,8 +11,6 @@
 
 import Setting;
 
-using ConfigList = std::vector<std::string>;
-
 extern std::string HtmlGlobalPath;
 
 enum class ErrorCode
@@ -87,12 +85,7 @@ struct Command
 	std::string Name;
 	std::string Cmd;
 	Command() {}
-	Command(Command&& source) noexcept :
-		Name(std::move(source.Name)),
-		Cmd(std::move(source.Cmd))
-	{
-		std::cout << "Command el was moved! Name: " << Name.c_str() << source.Name.c_str() << std::endl;
-	}
+	Command(Command&& moved) = default;
 };
 
 auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool;
