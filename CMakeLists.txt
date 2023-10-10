@@ -18,14 +18,18 @@ set(CMAKE_CXX_STANDARD 20)
 file(GLOB SOURCES
 	"${PROJECT_SOURCE_DIR}/*.ixx"
 	"${PROJECT_SOURCE_DIR}/*.cpp"
-	"${PROJECT_SOURCE_DIR}/libs/*.c"
 	"${PROJECT_SOURCE_DIR}/Modules/*.ixx"
+	"${PROJECT_SOURCE_DIR}/GitSubmodules/Sqlite3/sqlite3.c"
 )
 
 include_directories(
 	${PROJECT_SOURCE_DIR}
-	${PROJECT_SOURCE_DIR}/libs
 	${PROJECT_SOURCE_DIR}/Modules
+	${PROJECT_SOURCE_DIR}/GitSubmodules/Sqlite3
+	${PROJECT_SOURCE_DIR}/GitSubmodules/Json/include
+	${PROJECT_SOURCE_DIR}/GitSubmodules/Json/include/nlohmann
+	${PROJECT_SOURCE_DIR}/GitSubmodules/Inja/include/inja
+	${PROJECT_SOURCE_DIR}/GitSubmodules/Httplib
 )
 
 add_executable(PortsServer ${SOURCES})
@@ -51,6 +55,12 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/build/Debug/Configurations.sqlite")
 	file(COPY_FILE ${PROJECT_SOURCE_DIR}/build/Debug/Configurations.sqlite ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/Configurations.sqlite)
 endif()
 
+if(EXISTS "${PROJECT_SOURCE_DIR}/GitSubmodules/Bootstrap/dist/")
+	file(COPY ${PROJECT_SOURCE_DIR}/GitSubmodules/Bootstrap/dist/ DESTINATION ${PROJECT_SOURCE_DIR}/html/bootstrap-dist)
+endif()
+
 if(EXISTS "${PROJECT_SOURCE_DIR}/html/")
 	file(COPY ${PROJECT_SOURCE_DIR}/html/ DESTINATION ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/html/)
 endif()
+
+# git submodule add -f --name httplib https://github.com/yhirose/cpp-httplib.git  GitSubmodules/Httplib

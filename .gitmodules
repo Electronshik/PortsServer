@@ -1,3 +1,18 @@
 [submodule "Modules"]
 	path = Modules
 	url = https://github.com/Electronshik/Modules.git
+[submodule "bootstrap"]
+	path = GitSubmodules/Bootstrap
+	url = https://github.com/twbs/bootstrap.git
+[submodule "json"]
+	path = GitSubmodules/Json
+	url = https://github.com/nlohmann/json.git
+[submodule "httplib"]
+	path = GitSubmodules/Httplib
+	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "sqlite3"]
+	path = GitSubmodules/Sqlite3
+	url = https://github.com/LuaDist/libsqlite3.git
+[submodule "inja"]
+	path = GitSubmodules/Inja
+	url = https://github.com/pantor/inja.git

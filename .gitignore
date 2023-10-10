@@ -13,6 +13,9 @@ _deps
 doc
 build
 
+GitSubmodules
+html/bootstrap-dist
+
 NwJsApp/versions
 
 # there must be no '.git' folder inside 'actual/' folder
