@@ -6,7 +6,7 @@
     <title>Serial Port Communicator</title>
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous"> -->
     <link href="/html/bootstrap-dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.js"></script>
   </head>
   <body>
     <div class="container py-5">
@@ -83,6 +83,27 @@
     <script src="/html/bootstrap-dist/js/bootstrap.bundle.min.js"></script>
     <script>
 
+      var ErrorCodeOk = '{{ inja_error_code_ok }}';
+      var ErrorCodeError = '{{ inja_error_code_error }}';
+
+      function setCookie(name, value, days)
+      {
+        let expires = "";
+        if (days) {
+          let date = new Date();
+          date.setTime(date.getTime() + (days*24*60*60*1000));
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+      }
+
+      function getCookie(name)
+      {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+
       let recvTimerId;
       function enableReceiveTimer(enable = false) {
         if (enable)
@@ -108,82 +129,31 @@
         }
       }
 
-      Vue.component('config-parameter', {
-        props: ['name', 'label', 'values','id'],
-        computed: {
-          disabled: function() {
-            return !this.$parent.port_params_enabled;
-          },
-          selected: function() {
-            selectedVal = '';
-            this.$parent.selected_params.forEach((sel_param) => {
-              if(sel_param.name == this.name)
+      const app = Vue.createApp({
+        data: function() {
+          return {
+            config_name: '',
+            configurations: ['test'],
+            new_config_flag: false,
+            config_new_name: '',
+            port_params_enabled: false,
+            port_params: [
               {
-                selectedVal = sel_param.value;
-                console.log('Selected: ' + sel_param.name + ' = ' + sel_param.value);
+                "label": "Speed",
+                "name": "speed",
+                "values": ["9600","19200","115200"]
               }
-            });
-            return selectedVal
+            ],
+            selected_params: [
+              {
+                "name": "speed",
+                "value": "19200"
+              }
+            ],
+            port_is_opened: false,
+            ports : '',
+            commands: []
           }
-        },
-        methods:{
-          onChange:function(event){
-            this.$parent.onSelectedChange(this.name, event.target.value);
-          }
-        },
-        template: '<div class="col-sm-2"> \
-                    <label :for="id">{{ label }}</label> \
-                    <select class="form-select" :id="id" :disabled="disabled" v-on:change="onChange($event)"> \
-                      <option v-for="value in values" :value="value" :selected="value == selected">{{ value }}</option> \
-                    </select> \
-                  </div>'
-      })
-
-      Vue.component('config-command', {
-        props: ['cmd', 'name'],
-        computed: {
-          disabled: function() {
-            return !this.$parent.port_is_opened;
-          }
-        },
-        methods: {
-          sendEvent: function() {
-            this.$parent.sendCommand(this.cmd);
-          }
-        },
-        template: '<div class="row">  \
-                    <div class="col-sm-2">  \
-                      <button type="button" class="btn btn-success"	v-on:click="sendEvent" :disabled="disabled">{{ name }}</button>  \
-                    </div>  \
-                    <div class="col-sm-2"">  \
-                    <p>{{ cmd }}</p></div>  \
-                  </div>'
-      })
-
-      var Ports = new Vue({
-        el: '#config-vue-container',
-        data: {
-          config_name: '',
-          configurations: ['test'],
-          new_config_flag: false,
-          config_new_name: '',
-          port_params_enabled: false,
-          port_params: [
-            {
-              "label": "Speed",
-              "name": "speed",
-              "values": ["9600","19200","115200"]
-            }
-          ],
-          selected_params: [
-            {
-              "name": "speed",
-              "value": "19200"
-            }
-          ],
-          port_is_opened: false,
-          ports : '',
-          commands: []
         },
         computed: {
           new_config_process: function() {
@@ -239,7 +209,7 @@
             //console.log(JSON.stringify(this.selected_params));
           },
           enableConfigEdit: function () {
-            Ports.port_params_enabled = true;
+            this.port_params_enabled = true;
             this.config_new_name = this.config_name;
           },
           saveConfigEdit: function () {
@@ -286,10 +256,10 @@
               .catch((error) => console.log(error));
             }
   
-            Ports.port_params_enabled = false;
+            this.port_params_enabled = false;
           },
           cancelConfigEdit: function () {
-            Ports.port_params_enabled = false;
+            this.port_params_enabled = false;
           },
           scanPorts: function () {
             fetch('/api/getportslist').then((response) => { return response.json() })
@@ -299,7 +269,7 @@
           openPort: function () {
             fetch('/api/openport', {
               method: 'POST',
-              body: 'port=' + this.$el.querySelector("#select_ports").value + '&' + getConfigPostParams()
+              body: 'port=' + document.getElementById("select_ports").value + '&' + getConfigPostParams()
             })
             .then((response) => { return response.json() })
             .then((data) => {
@@ -314,7 +284,7 @@
           closePort: function () {
             fetch('/api/closeport', {
               method: 'POST',
-              body: 'port=' + this.$el.querySelector("#select_ports").value
+              body: 'port=' + document.getElementById("select_ports").value
             })
             .then((response) => { return response.json() })
             .then((data) => {
@@ -362,42 +332,74 @@
           .then((data) => this.commands = data["commands_array"])
           .catch((error) => console.log(error));
         }
+      });
+
+      app.component('config-parameter', {
+        props: ['name', 'label', 'values','id'],
+        computed: {
+          disabled: function() {
+            return !this.$parent.port_params_enabled;
+          },
+          selected: function() {
+            selectedVal = '';
+            this.$parent.selected_params.forEach((sel_param) => {
+              if(sel_param.name == this.name)
+              {
+                selectedVal = sel_param.value;
+                console.log('Selected: ' + sel_param.name + ' = ' + sel_param.value);
+              }
+            });
+            return selectedVal
+          }
+        },
+        methods:{
+          onChange:function(event){
+            this.$parent.onSelectedChange(this.name, event.target.value);
+          }
+        },
+        template: '<div class="col-sm-2"> \
+                    <label :for="id">{{ label }}</label> \
+                    <select class="form-select" :id="id" :disabled="disabled" v-on:change="onChange($event)"> \
+                      <option v-for="value in values" :value="value" :selected="value == selected">{{ value }}</option> \
+                    </select> \
+                  </div>'
       })
 
-      var ErrorCodeOk = '{{ inja_error_code_ok }}';
-      var ErrorCodeError = '{{ inja_error_code_error }}';
+      app.component('config-command', {
+        props: ['cmd', 'name'],
+        computed: {
+          disabled: function() {
+            return !this.$parent.port_is_opened;
+          }
+        },
+        methods: {
+          sendEvent: function() {
+            this.$parent.sendCommand(this.cmd);
+          }
+        },
+        template: '<div class="row">  \
+                    <div class="col-sm-2">  \
+                      <button type="button" class="btn btn-success"	v-on:click="sendEvent" :disabled="disabled">{{ name }}</button>  \
+                    </div>  \
+                    <div class="col-sm-2">  \
+                    <p>{{ cmd }}</p></div>  \
+                  </div>'
+      })
 
-      function setCookie(name, value, days)
-      {
-        let expires = "";
-        if (days) {
-          let date = new Date();
-          date.setTime(date.getTime() + (days*24*60*60*1000));
-          expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-      }
-
-      function getCookie(name)
-      {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-      }
+      const vue_container = app.mount("#config-vue-container");
 
       function getConfigPostParams()
       {
         paramStr = '';
-        for(sel_param of Ports.selected_params)
+        for(sel_param of vue_container.$data.selected_params)
         {
           paramStr += sel_param.name + '=' + sel_param.value;
-          if(sel_param != Ports.selected_params[Ports.selected_params.length - 1])
+          if(sel_param != vue_container.$data.selected_params[vue_container.$data.selected_params.length - 1])
             paramStr += '&';
         };
         console.log('paramStr: ' + paramStr);
         return paramStr;
       }
-
 
       document.addEventListener('DOMContentLoaded', function() {
 

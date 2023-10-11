@@ -15,6 +15,7 @@ build
 
 GitSubmodules
 html/bootstrap-dist
+html/vue-js
 
 NwJsApp/versions
 

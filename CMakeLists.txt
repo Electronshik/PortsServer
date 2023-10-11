@@ -59,6 +59,11 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/GitSubmodules/Bootstrap/dist/")
 	file(COPY ${PROJECT_SOURCE_DIR}/GitSubmodules/Bootstrap/dist/ DESTINATION ${PROJECT_SOURCE_DIR}/html/bootstrap-dist)
 endif()
 
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/html/vue-js/vue.global.js")
+	message(STATUS "Vue.js not found, downloading..")
+	file(DOWNLOAD "https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.js" ${PROJECT_SOURCE_DIR}/html/vue-js/vue.global.js)
+endif()
+
 if(EXISTS "${PROJECT_SOURCE_DIR}/html/")
 	file(COPY ${PROJECT_SOURCE_DIR}/html/ DESTINATION ${PROJECT_SOURCE_DIR}/NwJsApp/actual/package.nw/html/)
 endif()
