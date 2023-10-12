@@ -16,14 +16,15 @@ set(CMAKE_CXX_STANDARD 20)
 # add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++2a)
 
 file(GLOB SOURCES
-	"${PROJECT_SOURCE_DIR}/*.ixx"
 	"${PROJECT_SOURCE_DIR}/*.cpp"
+	"${PROJECT_SOURCE_DIR}/PortApi/*.cpp"
 	"${PROJECT_SOURCE_DIR}/Modules/*.ixx"
 	"${PROJECT_SOURCE_DIR}/GitSubmodules/Sqlite3/sqlite3.c"
 )
 
 include_directories(
 	${PROJECT_SOURCE_DIR}
+	${PROJECT_SOURCE_DIR}/PortApi
 	${PROJECT_SOURCE_DIR}/Modules
 	${PROJECT_SOURCE_DIR}/GitSubmodules/Sqlite3
 	${PROJECT_SOURCE_DIR}/GitSubmodules/Json/include

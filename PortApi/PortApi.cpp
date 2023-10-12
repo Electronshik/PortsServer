@@ -1,16 +1,16 @@
-#include "Api.h"
-#include "SerialApi.h"
+#include "PortApi.h"
+#include "SerialPortApi.h"
 #include "json.hpp"
 
 import Utils;
 using json = nlohmann::json;
 
-namespace Api
+namespace PortApi
 {
 	void GetPortsList(const Request& req, Response& res)
 	{
 		json data;
-		data["ports"] = SerialApi::GetPortsList();
+		data["ports"] = SerialPortApi::GetPortsList();
 		res.set_content(data.dump(), "application/json");
 	}
 
@@ -22,7 +22,7 @@ namespace Api
 			SerialPortConfig port_config;
 			if (ParsePortConfig(req.body, &port_config))
 			{
-				SerialApi::OpenPort(port_name.value(), port_config);
+				SerialPortApi::OpenPort(port_name.value(), port_config);
 				result = ErrorCode::Ok;
 			}
 		}
@@ -36,7 +36,7 @@ namespace Api
 		auto result = ErrorCode::Error;
 		if (auto port_name = ParseGetPostParam(req.body, "port"); port_name)
 		{
-			SerialApi::ClosePort(port_name.value());
+			SerialPortApi::ClosePort(port_name.value());
 			result = ErrorCode::Ok;
 		}
 		json data;
@@ -51,7 +51,7 @@ namespace Api
 		{
 			if (auto cmd = ParseGetPostParam(req.body, "cmd"); cmd)
 			{
-				SerialApi::Send(port_name.value(), cmd.value());
+				SerialPortApi::Send(port_name.value(), cmd.value());
 				result = ErrorCode::Ok;
 			}
 		}
@@ -67,7 +67,7 @@ namespace Api
 		if (auto port_name = ParseGetPostParam(req.body, "port"); port_name)
 		{
 			result = ErrorCode::Ok;
-			received = SerialApi::Receive(port_name.value());
+			received = SerialPortApi::Receive(port_name.value());
 			if (received != "")
 				std::cout << "Read from port: " << port_name.value() << ", Val: " << received << std::endl;
 		}
@@ -79,7 +79,7 @@ namespace Api
 
 	void GetTestData(const Request& req, Response& res)
 	{
-		std::string test_data = SerialApi::GetTestData();
+		std::string test_data = SerialPortApi::GetTestData();
 		res.set_content(test_data, "application/json");
 	}
 }

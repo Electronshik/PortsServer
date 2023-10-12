@@ -109,7 +109,7 @@
         if (enable)
         {
           recvTimerId = setInterval(() => {
-            fetch('/api/readfromport', {
+            fetch('/portapi/readfromport', {
               method: 'POST',
               body: 'port=' + document.getElementById('select_ports').value
             })
@@ -262,12 +262,12 @@
             this.port_params_enabled = false;
           },
           scanPorts: function () {
-            fetch('/api/getportslist').then((response) => { return response.json() })
+            fetch('/portapi/getportslist').then((response) => { return response.json() })
             .then((data) => this.ports = data.ports)
             .catch((error) => console.log(error));
           },
           openPort: function () {
-            fetch('/api/openport', {
+            fetch('/portapi/openport', {
               method: 'POST',
               body: 'port=' + document.getElementById("select_ports").value + '&' + getConfigPostParams()
             })
@@ -282,7 +282,7 @@
             .catch((error) => console.log(error));
           },
           closePort: function () {
-            fetch('/api/closeport', {
+            fetch('/portapi/closeport', {
               method: 'POST',
               body: 'port=' + document.getElementById("select_ports").value
             })
@@ -294,7 +294,7 @@
             .catch((error) => console.log(error));
           },
           sendCommand: function (command) {
-            fetch('/api/sendtoport', {
+            fetch('/portapi/sendtoport', {
               method: 'POST',
               body: 'port=' + document.getElementById('select_ports').value + '&cmd=' + command
             })

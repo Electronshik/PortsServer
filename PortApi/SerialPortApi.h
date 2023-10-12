@@ -1,7 +1,7 @@
 #pragma once
 #include "main.h"
 
-namespace SerialApi
+namespace SerialPortApi
 {
 	enum class ErrorCode
 	{
