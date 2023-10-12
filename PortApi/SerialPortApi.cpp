@@ -1,4 +1,4 @@
-#include "SerialApi.h"
+#include "SerialPortApi.h"
 #include "SerialPort.h"
 #include "TestPort.h"
 #include <memory>
@@ -7,7 +7,7 @@
 
 import Utils;
 
-namespace SerialApi
+namespace SerialPortApi
 {
 	template<class T> concept PortTypeInterface =
 	requires (T t)

@@ -4,7 +4,7 @@
 
 using namespace httplib;
 
-namespace Api
+namespace PortApi
 {
 	void GetPortsList(const Request& req, Response& res);
 	void OpenPort(const Request& req, Response& res);

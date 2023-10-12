@@ -2,7 +2,7 @@
 #include "httplib.h"
 #include "Model.h"
 #include "View.h"
-#include "Api.h"
+#include "PortApi.h"
 #include "json.hpp"
 #include <format>
 #include <regex>
@@ -283,12 +283,12 @@ auto main(int argc, char* argv[]) -> int
 		res.set_content(data.dump(), "application/json");
 	});
 
-	server.Get("/api/getportslist", Api::GetPortsList);
-	server.Post("/api/openport", Api::OpenPort);
-	server.Post("/api/closeport", Api::ClosePort);
-	server.Post("/api/sendtoport", Api::SendToPort);
-	server.Post("/api/readfromport", Api::ReadFromPort);
-	server.Get("/api/gettestdata", Api::GetTestData);
+	server.Get("/portapi/getportslist", PortApi::GetPortsList);
+	server.Post("/portapi/openport", PortApi::OpenPort);
+	server.Post("/portapi/closeport", PortApi::ClosePort);
+	server.Post("/portapi/sendtoport", PortApi::SendToPort);
+	server.Post("/portapi/readfromport", PortApi::ReadFromPort);
+	server.Get("/portapi/gettestdata", PortApi::GetTestData);
 
 
 	// server.Get("/body-header-param", [](const Request &req, Response &res)
