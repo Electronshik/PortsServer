@@ -8,7 +8,7 @@ auto TestPort::GetPortsList() -> std::vector<std::string>
 	return result;
 }
 
-TestPort::TestPort(std::string &name, SerialPortConfig &port_config)
+TestPort::TestPort(std::string &name, SerialPort::Config &serial_config)
 {
 	this->name = name;
 }
@@ -28,9 +28,9 @@ void TestPort::Write(char* buff, int len)
 	this->received.append(buff);
 }
 
-auto TestPort::Read(char* buff) -> int
+auto TestPort::Read(char* buff) -> unsigned int
 {
-	int len = this->received.length();
+	unsigned int len = this->received.length();
 	strcpy(buff, this->received.c_str());
 	this->received.clear();
 

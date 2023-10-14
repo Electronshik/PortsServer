@@ -13,14 +13,15 @@ namespace SerialPortApi
 	requires (T t)
 	{
 		{ T::GetPortsList() } -> std::same_as<std::vector<std::string>>;
-		T(std::declval<std::string&>(), std::declval<SerialPortConfig&>());
+		T(std::declval<std::string&>(), std::declval<SerialPort::Config&>());
 		// std::is_constructible<T>; // cease to work in mvsc
 		// std::is_destructible<T>; // cease to work in mvsc
 		{ t.GetName() } -> std::same_as<std::string>;
 		{ t.Write(std::declval<char*>(), int{}) } -> std::same_as<void>;
-		{ t.Read(std::declval<char*>()) } -> std::same_as<int>;
+		{ t.Read(std::declval<char*>()) } -> std::same_as<unsigned int>;
 	};
 
+	// using PortType = SerialPort;
 	using PortType = TestPort;
 	static_assert(PortTypeInterface<PortType>);
 
@@ -32,6 +33,28 @@ namespace SerialPortApi
 		{ ErrorCode::PortClosed, "PortClosed" },
 	};
 
+	void StringPortConfigToSerialConfig (SerialPortConfig &port_config, SerialPort::Config &serial_config)
+	{
+		if (port_config.Speed == "9600")
+			serial_config.Speed = SerialPort::Speed::s_9600;
+		else if (port_config.Speed == "19200")
+			serial_config.Speed = SerialPort::Speed::s_19200;
+
+		if (port_config.Databits == "7")
+			serial_config.Databits = SerialPort::Databits::b7;
+
+		if (port_config.Parity == "Odd")
+			serial_config.Parity = SerialPort::Parity::Odd;
+		else if (port_config.Parity == "Even")
+			serial_config.Parity = SerialPort::Parity::Even;
+
+		if (port_config.Stopbits == "2")
+			serial_config.Stopbits = SerialPort::Stopbits::b2;
+
+		if (port_config.Flowcontrol == "Yes")
+			serial_config.Flowctrl = SerialPort::Flowctrl::Yes;
+	}
+
 	auto GetPortsList() -> std::vector<std::string>
 	{
 		return PortType::GetPortsList();
@@ -39,7 +62,10 @@ namespace SerialPortApi
 
 	auto OpenPort(std::string &port_name, SerialPortConfig &port_config) -> ErrorCode
 	{
-		OpenedPorts.push_back(std::make_unique<PortType>(port_name, port_config));
+		SerialPort::Config serial_config;
+		StringPortConfigToSerialConfig(port_config, serial_config);
+
+		OpenedPorts.push_back(std::make_unique<PortType>(port_name, serial_config));
 		return ErrorCode::Ok;
 	}
 
