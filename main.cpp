@@ -57,7 +57,7 @@ auto ParsePortConfig(const std::string &str, SerialPortConfig *config) -> bool
 auto ParseGetPostParam(const std::string &str, const std::string &name) -> std::optional<std::string>
 {
 	std::smatch match;
-	std::regex pattern(name + "=([a-zA-Z0-9]+)");
+	std::regex pattern(name + "=([a-zA-Z0-9_]+)");
 	if (std::regex_search(str, match, pattern))
 	{
 		std::string result = match[1];
@@ -108,6 +108,7 @@ auto main(int argc, char* argv[]) -> int
 		CreateDefaultConfiguration(model);
 	}
 
+#ifdef DEBUG_BUILD
 	server.set_logger([](const Request &req, const Response &res)
 	{
 		if (req.method == "GET")
@@ -128,6 +129,7 @@ auto main(int argc, char* argv[]) -> int
 			print_nl("Log Other request: {}", req.path);
 		}
 	});
+#endif
 
 	server.Get("/", [&view, &model](const Request &req, Response &res)
 	{
@@ -237,6 +239,7 @@ auto main(int argc, char* argv[]) -> int
 		res.set_content(data.dump(), "application/json");
 	});
 
+	// todo: split it or add config to postman
 	server.Post("/saveconfigparams", [&model](const Request &req, Response &res)
 	{
 		auto result = ErrorCode::Error;
@@ -279,6 +282,55 @@ auto main(int argc, char* argv[]) -> int
 			data["commands_array"] = outjson_vec;
 			result = ErrorCode::Ok;
 		}
+		data["result"] = ErrorString[result];
+		res.set_content(data.dump(), "application/json");
+	});
+
+	server.Post("/addconfigcommand", [&model](const Request &req, Response &res)
+	{
+		auto result = ErrorCode::Error;
+		if (auto config_name = ParseGetPostParam(req.body, "config"); config_name)
+		{
+			if (auto cmd_name = ParseGetPostParam(req.body, "name"), cmd = ParseGetPostParam(req.body, "cmd"); cmd_name && cmd)
+			{
+				model.AddCommand(config_name.value().c_str(), cmd_name.value().c_str(), cmd.value().c_str());
+				result = ErrorCode::Ok;
+			}
+		}
+		json data;
+		data["result"] = ErrorString[result];
+		res.set_content(data.dump(), "application/json");
+	});
+
+	server.Post("/updateconfigcommand", [&model](const Request &req, Response &res)
+	{
+		auto result = ErrorCode::Error;
+		if (auto config_name = ParseGetPostParam(req.body, "config"); config_name)
+		{
+			if (auto cmd_name = ParseGetPostParam(req.body, "name"), cmd = ParseGetPostParam(req.body, "cmd"),
+				old_name = ParseGetPostParam(req.body, "old_name"); cmd_name && cmd && old_name)
+			{
+				model.UpdateCommand(config_name.value().c_str(), cmd_name.value().c_str(), cmd.value().c_str(), old_name.value().c_str());
+				result = ErrorCode::Ok;
+			}
+		}
+		json data;
+		data["result"] = ErrorString[result];
+		res.set_content(data.dump(), "application/json");
+	});
+
+	server.Post("/deleteconfigcommand", [&model](const Request &req, Response &res)
+	{
+		auto result = ErrorCode::Error;
+		if (auto config_name = ParseGetPostParam(req.body, "config"); config_name)
+		{
+			if (auto cmd_name = ParseGetPostParam(req.body, "name"); cmd_name)
+			{
+				model.DeleteCommand(config_name.value().c_str(), cmd_name.value().c_str());
+				result = ErrorCode::Ok;
+			}
+		}
+		json data;
 		data["result"] = ErrorString[result];
 		res.set_content(data.dump(), "application/json");
 	});

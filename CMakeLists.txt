@@ -9,6 +9,11 @@ set(CMAKE_SUPPRESS_REGENERATION true)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
 
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+	message("Cmake Debug mode")
+	add_compile_definitions(DEBUG_BUILD)
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
 # add_compile_options(-O0)
 # -std=c++20 -fexperimental-library -lc++experimental)
 # add_link_options(-O0)

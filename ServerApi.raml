@@ -185,6 +185,72 @@ version: 1
               "result": "Ok"
             }
 
+/addconfigcommand:
+  displayName: AddConfigCommand
+  description: Add new command to the configuration
+  post:
+    body:
+      text/plain:
+        type: string
+        example: config=test&name=new_cmd&cmd=0xff
+    responses:
+      '200':
+        body:
+          application/json:
+            examples: |
+              exOk: |
+              {
+                "result": "Ok"
+              }
+              exErr: |
+              {
+                "result": "Error"
+              }
+
+/updateconfigcommand:
+  displayName: UpdateConfigCommand
+  description: Update command in the configuration
+  post:
+    body:
+      text/plain:
+        type: string
+        example: config=test&name=new_cmd&cmd=0xff&old_name=old_cmd
+    responses:
+      '200':
+        body:
+          application/json:
+            examples: |
+              exOk: |
+              {
+                "result": "Ok"
+              }
+              exErr: |
+              {
+                "result": "Error"
+              }
+
+/deleteconfigcommand:
+  displayName: DeleteConfigCommand
+  description: Delete command from the configuration
+  post:
+    body:
+      text/plain:
+        type: string
+        example: config=test&name=old_cmd
+    responses:
+      '200':
+        body:
+          application/json:
+            examples: |
+              exOk: |
+              {
+                "result": "Ok"
+              }
+              exErr: |
+              {
+                "result": "Error"
+              }
+
 /portapi:
   /getportslist:
     displayName: GetPortsList

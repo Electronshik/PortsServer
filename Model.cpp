@@ -173,9 +173,9 @@ void Model::AddCommand(const char *configuration, const char *cmd_name, const ch
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
-void Model::UpdateCommand(const char *configuration, const char *cmd_name, const char *command) const
+void Model::UpdateCommand(const char *configuration, const char *cmd_name, const char *command, const char *old_name) const
 {
-	std::string query = std::format("UPDATE {0} SET command='{1}' WHERE name='{2}'", configuration, command, cmd_name);
+	std::string query = std::format("UPDATE {0} SET name='{1}', command='{2}' WHERE name='{3}'", configuration, cmd_name, command, old_name);
 	sqlite3_exec(this->db, query.c_str(), NULL, 0, NULL);
 }
 
