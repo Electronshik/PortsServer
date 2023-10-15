@@ -24,6 +24,7 @@ file(GLOB SOURCES
 	"${PROJECT_SOURCE_DIR}/*.cpp"
 	"${PROJECT_SOURCE_DIR}/PortApi/*.cpp"
 	"${PROJECT_SOURCE_DIR}/Modules/*.ixx"
+	"${PROJECT_SOURCE_DIR}/Modules/SerialPort.cpp"
 	"${PROJECT_SOURCE_DIR}/GitSubmodules/Sqlite3/sqlite3.c"
 )
 

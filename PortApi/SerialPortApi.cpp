@@ -21,8 +21,12 @@ namespace SerialPortApi
 		{ t.Read(std::declval<char*>()) } -> std::same_as<unsigned int>;
 	};
 
-	// using PortType = SerialPort;
+#ifdef DEBUG_BUILD
 	using PortType = TestPort;
+#else
+	using PortType = SerialPort;
+#endif
+
 	static_assert(PortTypeInterface<PortType>);
 
 	std::vector<std::unique_ptr<PortType>> OpenedPorts;
