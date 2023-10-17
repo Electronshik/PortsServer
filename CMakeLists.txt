@@ -76,3 +76,4 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/html/")
 endif()
 
 # git submodule add -f --name httplib https://github.com/yhirose/cpp-httplib.git  GitSubmodules/Httplib
+# https://stackoverflow.com/questions/1260748/how-do-i-remove-a-submodule

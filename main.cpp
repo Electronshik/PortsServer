@@ -401,3 +401,9 @@ auto main(int argc, char* argv[]) -> int
 	print_nl("Server listen at port: {}", ServerPort);
 	server.listen("localhost", ServerPort);
 }
+
+/* todo list:
+ - add commands to index.html
+ - add crossplatform serial port library
+ -
+*/
