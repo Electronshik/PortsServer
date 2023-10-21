@@ -1,71 +1,102 @@
 <!doctype html>
 <html lang="en">
+
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Serial Port Communicator</title>
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous"> -->
+    <link href="/html/style.css" rel="stylesheet">
     <link href="/html/bootstrap-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/html/bootstrap-dist/js/bootstrap.bundle.min.js"></script>
     <script src="/html/vue-js/vue.global.js"></script>
+    <link src="href=https://vuejsprojects.com/portal-vue" rel="javascript">
   </head>
+
   <body>
     <div class="container py-5">
-      <h3 class="h3">Serial Port Communicator</h3>
-
       <div id="config-vue-container">
-        <div class="row">
-          <p>
+
+        <div class="configuration-content">
+          <div class="row">
+            <div class="col-sm-6">
+              <h4 class="h4">Serial Port Communicator</h4>
+            </div>
+            <div class="col-sm-6">
+              <div class="d-flex justify-content-center" v-if="load_not_over">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
             <div class="col-sm-2">
-              <p>Active configuration:</p>
+              <div class="btn-group">
+                <button type="button" class="btn btn-primary my-class" :disabled="port_params_enabled || portIsOpened">{{ config_name }}</button>
+                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"
+                  :disabled="port_params_enabled || portIsOpened">
+                  <span class="visually-hidden">{{ config_name }}</span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><h6 class="dropdown-header">Select configuration</h6></li>
+                  <li v-for="conf in configurations" v-on:click="onConfigChange($event)">
+                    <a class="dropdown-item" href="#">{{ conf }}</a>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div class="col-sm-3">
-              <select class="form-select" aria-label="Default select example" v-on:change="onConfigChange($event)" :disabled="port_params_enabled || portIsOpened">
-                <option v-for="conf in configurations" :selected="conf == config_name">{{ conf }}</option>
-              </select>
+
+            <div class="col-sm-8">
+              <div class="btn-group">
+                <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target=".multi-collapse"
+                  v-on:click="addConfiguration" :disabled="port_params_enabled || portIsOpened">Add config</button>
+                <button type="button" class="btn btn-primary"
+                  v-on:click="deleteConfiguration" :disabled="port_params_enabled || portIsOpened">Delete config</button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target=".multi-collapse"
+                  v-on:click="enableConfigEdit" :disabled="port_params_enabled || portIsOpened">Edit config</button>
+              </div>
             </div>
-            <div class="col-sm-4">
-              <button type="button" class="btn btn-success" v-on:click="addConfiguration" :disabled="portIsOpened">Add configuration</button>
-              <button type="button" class="btn btn-success"v-on:click="deleteConfiguration" :disabled="portIsOpened">Delete configuration</button>
+
+          </div>
+
+          <div class="row py-2">
+            <div class="collapse multi-collapse">
+              <div class="col-sm-2">
+                <h6>Name:</h6>
+              </div>
+              <div class="col-sm-6">
+                <div class="btn-group">
+                  <input type="text" class="form-control" v-model="config_new_name" ref="new_config" id="config_new_name" />
+                  <button type="button" class="btn btn-success" data-bs-toggle="collapse" data-bs-target=".multi-collapse" v-on:click="saveConfigEdit" :disabled="!port_params_enabled || portIsOpened">Save</button>
+                  <button type="button" class="btn btn-success" data-bs-toggle="collapse" data-bs-target=".multi-collapse" v-on:click="cancelConfigEdit" :disabled="!port_params_enabled || portIsOpened">Cancel</button>
+                </div>
+              </div>
             </div>
-          </p>
-        </div>
-
-        <div class="row py-2">
-          <div class="col-sm-2" v-show="port_params_enabled">
-            <label for="config_new_name">Configuration Name: </label>
           </div>
-          <div class="col-sm-3" v-show="port_params_enabled">
-            <input type="text" class="form-control" v-model="config_new_name" ref="new_config" id="config_new_name" />
-          </div>
-        </div>
 
-        <div class="row">
-          <div class="col-sm-3">
-            <button type="button" class="btn btn-success" v-on:click="enableConfigEdit" :disabled="portIsOpened">Edit Config</button>
-            <button type="button" class="btn btn-success" v-on:click="saveConfigEdit" :disabled="!port_params_enabled || portIsOpened">Save</button>
-            <button type="button" class="btn btn-success" v-on:click="cancelConfigEdit" :disabled="!port_params_enabled || portIsOpened">Cancel</button>
+          <div class="row">
+            <config-parameter v-for="port_param in port_params" v-bind:name="port_param.name" v-bind:id="'param-' + port_param.name"
+              v-bind:label="port_param.label" v-bind:values="port_param.values">
+            </config-parameter>
           </div>
-        </div>
-
-        <div class="row">
-          <config-parameter v-for="port_param in port_params" v-bind:name="port_param.name" v-bind:id="'param-' + port_param.name"
-            v-bind:label="port_param.label" v-bind:values="port_param.values">
-          </config-parameter>
-        </div>
+        </div> <!-- configuration-content -->
 
         <div class="row py-5">
           <div class="col-sm-2">
-            <p>Available Ports:</p>
+            <h6>Available Ports:</h6>
           </div>
-          <div class="col-sm-3">
+          <div class="col-sm-2">
             <select class="form-select" id="select_ports" :disabled="portIsOpened || port_params_enabled" aria-label="Default select example">
               <option v-for="port in ports" :value="port">{{ port }}</option>
             </select>
           </div>
-          <div class="col-sm-5">
-            <button type="button" class="btn btn-success" v-on:click="scanPorts" :disabled="portIsOpened || port_params_enabled">Rescan Ports</button>
-            <button type="button" class="btn btn-primary" v-on:click="openPort" :disabled="portIsOpened || port_params_enabled">Port Open</button>
-            <button type="button" class="btn btn-primary" v-on:click="closePort" :disabled="portIsClosed || port_params_enabled">Port Close</button>
+          <div class="col-sm-6">
+            <div class="btn-group">
+              <button type="button" class="btn btn-success" v-on:click="scanPorts" :disabled="portIsOpened || port_params_enabled">Rescan Ports</button>
+              <button type="button" class="btn btn-primary" v-on:click="openPort" :disabled="portIsOpened || port_params_enabled">Port Open</button>
+              <button type="button" class="btn btn-primary" v-on:click="closePort" :disabled="portIsClosed || port_params_enabled">Port Close</button>
+            </div>
           </div>
         </div>
 
@@ -75,11 +106,10 @@
         </div class="row py-2">
           <p id="received_data"></p>
         </div>
-      </div> <!-- config-vue-container -->
 
+      </div> <!-- config-vue-container -->
     </div> <!-- container -->
 
-    <script src="/html/bootstrap-dist/js/bootstrap.bundle.min.js"></script>
     <script>
 
       var ErrorCodeOk = '{{ inja_error_code_ok }}';
@@ -131,6 +161,7 @@
       const app = Vue.createApp({
         data: function() {
           return {
+            load_not_over: true,
             config_name: '',
             configurations: ['test'],
             new_config_flag: false,
@@ -174,8 +205,9 @@
         },
         methods: {
           onConfigChange: function(event) {
-            this.config_name = event.target.value;
-            setCookie('active', event.target.value, 1);
+            //console.log(event.target.innerText);
+            this.config_name = event.target.innerText;
+            setCookie('active', event.target.innerText, 1);
             location.reload();
           },
           addConfiguration: function() {
@@ -328,7 +360,10 @@
 
           fetch('/getconfigcommands?config=' + this.config_name)
           .then((response) => { return response.json() })
-          .then((data) => this.commands = data["commands_array"])
+          .then((data) => {
+            this.commands = data["commands_array"];
+            this.load_not_over = false;
+          })
           .catch((error) => console.log(error));
         }
       });
@@ -345,7 +380,7 @@
               if(sel_param.name == this.name)
               {
                 selectedVal = sel_param.value;
-                console.log('Selected: ' + sel_param.name + ' = ' + sel_param.value);
+                //console.log('Selected: ' + sel_param.name + ' = ' + sel_param.value);
               }
             });
             return selectedVal
