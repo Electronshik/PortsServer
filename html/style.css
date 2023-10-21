@@ -1,8 +1,17 @@
 .configuration-content {
-    /* background-color: #fcfcfc;
-    border: 1px solid #dee2e6; */
+    /* background-color: #f8f9fa; */
+    /* border: 1px solid #dee2e6; */
 }
 
 .my-class {
     min-width: 75px !important;
+}
+
+label.param-label {
+    font-size: smaller;
+    color: #777;
+}
+
+span.input-group-text {
+    font-weight: 500;
 }

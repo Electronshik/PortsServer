@@ -405,5 +405,8 @@ auto main(int argc, char* argv[]) -> int
 /* todo list:
  - add/update config raml/postman port params
  - add commands to index.html
- - add crossplatform serial port library
+ - crossplatform serial port library
+ - crossplatform build
+ - docker server run for ci/cd
+ - ci/cd server run and postman tests
 */

@@ -17,20 +17,7 @@
     <div class="container py-5">
       <div id="config-vue-container">
 
-        <div class="configuration-content">
-          <div class="row">
-            <div class="col-sm-6">
-              <h4 class="h4">Serial Port Communicator</h4>
-            </div>
-            <div class="col-sm-6">
-              <div class="d-flex justify-content-center" v-if="load_not_over">
-                <div class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
+        <nav class="navbar bg-body-tertiary">
             <div class="col-sm-2">
               <div class="btn-group">
                 <button type="button" class="btn btn-primary my-class" :disabled="port_params_enabled || portIsOpened">{{ config_name }}</button>
@@ -47,29 +34,39 @@
               </div>
             </div>
 
-            <div class="col-sm-8">
+            <div class="col-sm-6">
               <div class="btn-group">
-                <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target=".multi-collapse"
+                <button type="button" class="btn btn-light" data-bs-toggle="collapse" data-bs-target=".multi-collapse"
                   v-on:click="addConfiguration" :disabled="port_params_enabled || portIsOpened">Add config</button>
-                <button type="button" class="btn btn-primary"
+                <button type="button" class="btn btn-light"
                   v-on:click="deleteConfiguration" :disabled="port_params_enabled || portIsOpened">Delete config</button>
-                <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target=".multi-collapse"
+                <button type="button" class="btn btn-light" data-bs-toggle="collapse" data-bs-target=".multi-collapse"
                   v-on:click="enableConfigEdit" :disabled="port_params_enabled || portIsOpened">Edit config</button>
               </div>
             </div>
 
-          </div>
+            <div class="col-sm-1">
+              <div class="d-flex justify-content-center" v-if="load_not_over">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-3 align-self-center">
+              <span>Serial Port Communicator</span>
+            </div>
+
+        </nav>
 
           <div class="row py-2">
             <div class="collapse multi-collapse">
-              <div class="col-sm-2">
-                <h6>Name:</h6>
-              </div>
-              <div class="col-sm-6">
-                <div class="btn-group">
-                  <input type="text" class="form-control" v-model="config_new_name" ref="new_config" id="config_new_name" />
+              <div class="col-sm-3">
+                <div class="input-group mb-3">
+                  <span class="input-group-text" id="config-addon1">Name:</span>
+                  <input type="text" class="form-control" v-model="config_new_name" ref="new_config" id="config_new_name" aria-describedby="config-addon1" />
                   <button type="button" class="btn btn-success" data-bs-toggle="collapse" data-bs-target=".multi-collapse" v-on:click="saveConfigEdit" :disabled="!port_params_enabled || portIsOpened">Save</button>
-                  <button type="button" class="btn btn-success" data-bs-toggle="collapse" data-bs-target=".multi-collapse" v-on:click="cancelConfigEdit" :disabled="!port_params_enabled || portIsOpened">Cancel</button>
+                  <button type="button" class="btn btn-warning" style="--bs-btn-bg: #fad463; --bs-btn-border-color: #fad463;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" v-on:click="cancelConfigEdit" :disabled="!port_params_enabled || portIsOpened">Cancel</button>
                 </div>
               </div>
             </div>
@@ -80,19 +77,20 @@
               v-bind:label="port_param.label" v-bind:values="port_param.values">
             </config-parameter>
           </div>
-        </div> <!-- configuration-content -->
 
         <div class="row py-5">
-          <div class="col-sm-2">
+          <!-- <div class="col-sm-2">
             <h6>Available Ports:</h6>
-          </div>
-          <div class="col-sm-2">
-            <select class="form-select" id="select_ports" :disabled="portIsOpened || port_params_enabled" aria-label="Default select example">
-              <option v-for="port in ports" :value="port">{{ port }}</option>
-            </select>
-          </div>
-          <div class="col-sm-6">
-            <div class="btn-group">
+          </div> -->
+          <div class="col-sm-7">
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="ports-addon1">Available Ports:</span>
+              <select class="form-select" id="select_ports" :disabled="portIsOpened || port_params_enabled" aria-label="Default select example" aria-describedby="ports-addon1">
+                <option v-for="port in ports" :value="port">{{ port }}</option>
+              </select>
+          <!-- </div> -->
+          <!-- <div class="col-sm-6"> -->
+            <!-- <div class="btn-group"> -->
               <button type="button" class="btn btn-success" v-on:click="scanPorts" :disabled="portIsOpened || port_params_enabled">Rescan Ports</button>
               <button type="button" class="btn btn-primary" v-on:click="openPort" :disabled="portIsOpened || port_params_enabled">Port Open</button>
               <button type="button" class="btn btn-primary" v-on:click="closePort" :disabled="portIsClosed || port_params_enabled">Port Close</button>
@@ -392,7 +390,7 @@
           }
         },
         template: '<div class="col-sm-2"> \
-                    <label :for="id">{{ label }}</label> \
+                    <label class="param-label" :for="id">{{ label }}</label> \
                     <select class="form-select" :id="id" :disabled="disabled" v-on:change="onChange($event)"> \
                       <option v-for="value in values" :value="value" :selected="value == selected">{{ value }}</option> \
                     </select> \
@@ -413,7 +411,7 @@
         },
         template: '<div class="row">  \
                     <div class="col-sm-2">  \
-                      <button type="button" class="btn btn-success"	v-on:click="sendEvent" :disabled="disabled">{{ name }}</button>  \
+                      <button type="button" class="btn btn-light"	v-on:click="sendEvent" :disabled="disabled">{{ name }}</button>  \
                     </div>  \
                     <div class="col-sm-2">  \
                     <p>{{ cmd }}</p></div>  \
