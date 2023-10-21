@@ -1,0 +1,821 @@
+{
+	"info": {
+		"_postman_id": "df5ac54a-31e5-4868-b9a0-17c94460a3fb",
+		"name": "PortsServerApi_Testing",
+		"description": "# About this collection\n\nThis collection helps you set up contract tests to ensure that two separate systems are compatible and can communicate with one another.\n\n## **Using the collection**\n\n**Step 1:** Send the sample requests and view the response and test results.\n\n**Step 2:** Replace the sample request URLs with your desired API endpoints.\n\n**Step 3:** Customize the tests in the \"Tests\" tab if needed. Don't forget to save your changes.\n\n### Resources\n\n[Scripting in Postman](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/)\n\n[Test script examples](https://learning.postman.com/docs/writing-scripts/script-references/test-examples/)\n\n[Postman Sandbox API reference](https://learning.postman.com/docs/sending-requests/grpc/postman-sandbox-api/#writing-assertions)\n\n[Using the Collection Runner](https://learning.postman.com/docs/collections/running-collections/intro-to-collection-runs/)\n\n[  \n](https://postman.postman.co/documentation/24552533-5bead607-0197-4e1d-87d4-3160bc7631c1?entity=&branch=&version=)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30174639"
+	},
+	"item": [
+		{
+			"name": "GetConfigList",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('configurations');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/getconfiglist",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"getconfiglist"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetAllParams",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    for (let i = 0; i < json.length; i++) {\r",
+							"        pm.expect(json[i]).to.have.property('label');\r",
+							"        pm.expect(json[i]).to.have.property('name');\r",
+							"        pm.expect(json[i]).to.have.property('values');\r",
+							"    }\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/getallparams",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"getallparams"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetConfigParams",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    for (let i = 0; i < json.length; i++) {\r",
+							"        pm.expect(json[i]).to.have.property('name');\r",
+							"        pm.expect(json[i]).to.have.property('value');\r",
+							"    }\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/getconfigparams?config=test",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"getconfigparams"
+					],
+					"query": [
+						{
+							"key": "config",
+							"value": "test"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DeleteConfig",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('result');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/deleteconfig?config=qwerty",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"deleteconfig"
+					],
+					"query": [
+						{
+							"key": "config",
+							"value": "qwerty"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SaveConfigParams",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('result');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/saveconfigparams",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"saveconfigparams"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetConfigCommands",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('result');\r",
+							"    pm.expect(json).to.have.property('commands_array');\r",
+							"    for (let i = 0; i < json.commands_array.length; i++) {\r",
+							"        pm.expect(json.commands_array[i]).to.have.property('cmd');\r",
+							"        pm.expect(json.commands_array[i]).to.have.property('name');\r",
+							"    }\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/getconfigcommands?config=test",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"getconfigcommands"
+					],
+					"query": [
+						{
+							"key": "config",
+							"value": "test"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AddConfigCommand",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('result');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "config=test&name=new_cmd&cmd=0xff"
+				},
+				"url": {
+					"raw": "http://localhost/addconfigcommand",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"addconfigcommand"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UpdateConfigCommand",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('result');\r",
+							"    pm.expect(json).to.have.property('commands_array');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "config=test&name=new_test_cmd&cmd=0xff&old_name=new_cmd"
+				},
+				"url": {
+					"raw": "http://localhost/updateconfigcommand",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"updateconfigcommand"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DeleteConfigCommand",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"`args` should contain the correct query params\", function () {\r",
+							"    pm.expect(json).to.have.property('result');\r",
+							"    pm.expect(json).to.have.property('commands_array');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "config=test&name=new_test_cmd"
+				},
+				"url": {
+					"raw": "http://localhost/deleteconfigcommand",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"deleteconfigcommand"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/GetTestData",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type should be JSON\", function () {\r",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    // pm.expect(json.args).to.be.an('object');\r",
+							"    pm.expect(json).to.have.property('ports');\r",
+							"    pm.expect(json).to.have.property('errors');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost/api/gettestdata",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"api",
+						"gettestdata"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/GetPortsList",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Content-Type should be JSON\", function () {",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"const json = pm.response.json();",
+							"pm.test(\"Response should contain the correct fields\", function () {",
+							"    pm.expect(json).to.have.property('ports');",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/api/getportslist",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"api",
+						"getportslist"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/OpenPort-Ok",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// pm.test(\"Response is expected\", function () {\r",
+							"//     pm.expect(pm.response.text()).to.be.eql('Ok');\r",
+							"// });\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    pm.expect(json).to.have.property('result').to.be.eql('Ok');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "port=COM85&config_speed=9600&config_databits=8&config_parity=None&config_stopbits=2&config_flowcontrol=None"
+				},
+				"url": {
+					"raw": "http://localhost/portapi/openport",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"portapi",
+						"openport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/OpenPort-Error",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    pm.expect(json).to.have.property('result').to.be.eql('Error');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "port_no=no"
+				},
+				"url": {
+					"raw": "http://localhost/portapi/openport",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"portapi",
+						"openport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/ClosePort-Ok",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    pm.expect(json).to.have.property('result').to.be.eql('Ok');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "port=COM85"
+				},
+				"url": {
+					"raw": "http://localhost/portapi/closeport",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"portapi",
+						"closeport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/ClosePort-Error",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    pm.expect(json).to.have.property('result').to.be.eql('Error');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "port_no=no"
+				},
+				"url": {
+					"raw": "http://localhost/portapi/closeport",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"portapi",
+						"closeport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/ReadFromPort-Ok",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    pm.expect(json).to.have.property('result').to.be.eql('Ok');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "port=COM85"
+				},
+				"url": {
+					"raw": "http://localhost/portapi/readfromport",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"portapi",
+						"readfromport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Api/ReadFromPort-Error",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const json = pm.response.json();\r",
+							"pm.test(\"Response should contain the correct fields\", function () {\r",
+							"    pm.expect(json).to.have.property('result').to.be.eql('Error');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "port_no=no"
+				},
+				"url": {
+					"raw": "http://localhost/portapi/readfromport",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"portapi",
+						"readfromport"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://postman-echo.com"
+		}
+	]
+}

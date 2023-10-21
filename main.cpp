@@ -403,7 +403,7 @@ auto main(int argc, char* argv[]) -> int
 }
 
 /* todo list:
+ - add/update config raml/postman port params
  - add commands to index.html
  - add crossplatform serial port library
- -
 */
